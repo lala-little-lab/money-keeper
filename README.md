@@ -1,15 +1,11 @@
-# Money Keeper — Step1 public preview
+# Money Keeper — Step2 IndexedDB test draft
 
-This is a **sanitized, temporary UI/logic preview**. No personal balances, transactions, recurring bills, events, or statement amounts are included. Initial balances and history are empty.
+This is a **local test build**, not production-ready. Do not enter real personal financial data.
 
-The original private Step9.7 demo and its backup **must never be committed** to this public repository.
-
-## Preview only
-- No IndexedDB persistence yet. Refresh resets entered data.
-- No production backup/restore, PWA, or migrations yet.
-- Some overview and billing panels use empty placeholders; compare layout and interactive controls with Step9.7, not personal figures.
-- `storage.js` and `migrations.js` are reserved for the next step.
-- Test on Galaxy S26 Ultra / Chrome / default font size over GitHub Pages HTTPS.
-
-## Privacy
-Do not commit any personal finance records, private backup JSON, passwords, tokens, or source demo files. The website's static files are public.
+- IndexedDB snapshot restore at startup; saves most state changes after render.
+- Some rare actions may not be covered yet; verify all mutation paths before production.
+- No JSON export/import backup, multi-device sync, or full migrations yet.
+- Data is stored in the browser on the current device, not in GitHub.
+- Use only fictional amounts and verify refresh persistence in Galaxy Chrome.
+- Do not publish this draft over the production site before full regression tests.
+- Never commit personal finance records or backups to public GitHub.

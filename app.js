@@ -351,4 +351,66 @@ function archiveEvent(id){let e=eventsData.find(x=>x.id===id);e.archived=!e.arch
 function deleteEvent(id){let e=eventsData.find(x=>x.id===id);if(!e||!e.archived)return;let linked=txs.filter(t=>t.eventTag===e.name).length;if(!confirm('「'+e.name+'」を削除しますか？\n\nイベントの予算・期間などの設定は消えます。'+(linked?'\n紐づく支出記録 '+linked+'件は削除せず、特別費名を記録側に残します。':'')+'\n必要なら同じ名前でイベントを作り直して復活できます。'))return;deletedEventNames.push(e.name);eventsData=eventsData.filter(x=>x.id!==id);recurring.forEach(r=>{if(r.event===e.name)r.event=''});if(openEventId===id)openEventId='';renderAll()}
 function addWish(){let n=$('wishName').value.trim(),p=moneyNum($('wishPrice').value),pt=Number($('wishPoints').value||0);if(!n||p<=0)return;wishes.unshift({name:n,price:p,points:pt});$('wishName').value='';$('wishPrice').value='';$('wishPoints').value='';renderWish()}function renderWish(){let t=wishes.reduce((s,w)=>s+Math.max(0,w.price-w.points),0);$('wishTotal').textContent=yen(t);$('wishShortcut').textContent='保留中 '+wishes.length+'件／実負担候補 '+yen(t);$('wishList').innerHTML=wishes.length?wishes.map(w=>`<div class="item"><div class="row"><div><div class="item-title">${w.name}</div><div class="item-meta">予定ポイント ${w.points.toLocaleString()}pt・実負担目安 ${yen(Math.max(0,w.price-w.points))}</div></div><strong>${yen(w.price)}</strong></div></div>`).join(''):'<div class="small">保留中のものはありません。</div>'}
 function renderRecent(){let items=txs.filter(t=>!isLoanExtra(t)&&t.type!=='loanAdjustment');$('recent').innerHTML=items.length?items.slice(0,6).map(t=>`<div class="item"><div class="row"><div><div class="item-title">${recordTitle(t)}</div><div class="item-meta">${t.date}${recordMeta(t)?'・'+recordMeta(t):''}</div></div><strong>${yen(txAmount(t))}</strong></div><div style="margin-top:5px"><button class="ghost sm" onclick="editRecord('${t.id}')">編集</button></div></div>`).join(''):'<div class="small">まだ記録はありません。</div>'}
-function renderAll(){renderBalances();renderRecent();renderHistory();renderLoans();renderPersonCandidates();renderDue();renderRecurring();renderBudget();renderEvents();renderWish();initMoneyInputs();refreshMoneyInputs()}renderPayBtns();renderCharge();renderAll();updateForm();initMoneyInputs();new MutationObserver(()=>initMoneyInputs()).observe(document.body,{childList:true,subtree:true});
+function renderAll(){renderBalances();renderRecent();renderHistory();renderLoans();renderPersonCandidates();renderDue();renderRecurring();renderBudget();renderEvents();renderWish();initMoneyInputs();refreshMoneyInputs();mkQueueSave()}
+
+// Only persisted business data; temporary form/navigation state stays ephemeral.
+let mkStorageReady=false, mkSaveTimer=null;
+function mkState(){return {
+  txs,loans,cashbook,snapshots,wishes,recurring,eventsData,
+  billAdjustments,billItemAdjustments,deletedEventNames,
+  loanArchivedPeople,loanGroups,loanGroupSerial,
+  monthlyBudget,categoryBudgets,chargeDefaults,
+  balances:Object.fromEntries(Object.entries(balances).map(([key,val])=>[key,val.v]))
+}}
+function mkRestoreState(state){
+  if(!state||typeof state!=='object')throw new Error('Invalid data');
+  const arrayKeys=['txs','loans','cashbook','snapshots','wishes','recurring','eventsData','deletedEventNames','loanArchivedPeople','loanGroups'];
+  for(const key of arrayKeys)if(state[key]!==undefined&&!Array.isArray(state[key]))throw new Error('Invalid '+key);
+  for(const key of arrayKeys)if(state[key]!==undefined){switch(key){
+    case 'txs':txs=state[key];break;case 'loans':loans=state[key];break;
+    case 'cashbook':cashbook=state[key];break;case 'snapshots':snapshots=state[key];break;
+    case 'wishes':wishes=state[key];break;case 'recurring':recurring=state[key];break;
+    case 'eventsData':eventsData=state[key];break;case 'deletedEventNames':deletedEventNames=state[key];break;
+    case 'loanArchivedPeople':loanArchivedPeople=state[key];break;case 'loanGroups':loanGroups=state[key];break;
+  }}
+  if(state.balances&&typeof state.balances==='object')for(const [key,val] of Object.entries(state.balances)){
+    if(balances[key]&&Number.isFinite(val))balances[key].v=val;
+  }
+  if(state.billAdjustments&&typeof state.billAdjustments==='object')billAdjustments=state.billAdjustments;
+  if(state.billItemAdjustments&&typeof state.billItemAdjustments==='object')billItemAdjustments=state.billItemAdjustments;
+  if(state.categoryBudgets&&typeof state.categoryBudgets==='object')categoryBudgets=state.categoryBudgets;
+  if(state.chargeDefaults&&typeof state.chargeDefaults==='object')chargeDefaults=state.chargeDefaults;
+  if(Number.isFinite(state.monthlyBudget))monthlyBudget=state.monthlyBudget;
+  if(Number.isSafeInteger(state.loanGroupSerial))loanGroupSerial=state.loanGroupSerial;
+}
+function mkQueueSave(){
+  if(!mkStorageReady)return;
+  clearTimeout(mkSaveTimer);
+  mkSaveTimer=setTimeout(()=>{
+    MKStorage.save(mkState()).catch(e=>{
+      mkStorageReady=false;
+      console.error('Money Keeper: 保存失敗',e);
+      alert('保存に失敗しました。これ以上の入力はせず、画面を閉じずにバックアップ方法を確認してください。');
+    });
+  },200);
+}
+// Some edit actions re-render only their own component; persist those as well.
+function mkWrapSave(name){const fn=globalThis[name];if(typeof fn!=='function')return;
+  globalThis[name]=function(...args){const result=fn.apply(this,args);mkQueueSave();return result};
+}
+['saveSnapshot','addWish','editMonthlyBudget','editCategoryBudget'].forEach(mkWrapSave);
+// Step2 draft: restore persisted data before the first render.
+async function mkBoot(){
+  try {
+    const saved=await MKStorage.load();
+    if(saved) mkRestoreState(saved);
+    mkStorageReady=true;
+  } catch(e) {
+    console.error('Money Keeper: 保存データの読み込みに失敗',e);
+    mkStorageReady=false;
+    alert('保存データを読み込めませんでした。安全のため、この画面では保存を停止しています。再読み込みして確認してください。');
+  }
+  renderPayBtns();renderCharge();renderAll();updateForm();initMoneyInputs();
+  new MutationObserver(()=>initMoneyInputs()).observe(document.body,{childList:true,subtree:true});
+}
+mkBoot();
