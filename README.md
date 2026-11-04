@@ -1,15 +1,33 @@
-# Money Keeper — Step1 public preview
+# Money Keeper 本番版 1.0
 
-This is a **sanitized, temporary UI/logic preview**. No personal balances, transactions, recurring bills, events, or statement amounts are included. Initial balances and history are empty.
+2026-11-04／テスト版#106を基準とする初回本番用パッケージ。
 
-The original private Step9.7 demo and its backup **must never be committed** to this public repository.
+## 配置
 
-## Preview only
-- No IndexedDB persistence yet. Refresh resets entered data.
-- No production backup/restore, PWA, or migrations yet.
-- Some overview and billing panels use empty placeholders; compare layout and interactive controls with Step9.7, not personal figures.
-- `storage.js` and `migrations.js` are reserved for the next step.
-- Test on Galaxy S26 Ultra / Chrome / default font size over GitHub Pages HTTPS.
+money-keeper リポジトリのルートへ、このZIPの7ファイルを一式アップロードしてください。money-keeper-test と money-keeper-mini は変更しません。GitHubへのアップロード・公開は利用者が行います。
+公開URL: https://lala-little-lab.github.io/money-keeper/
+本番版1.0の表示を確認してください。別パスでは保存を開始せず案内を表示します。
 
-## Privacy
-Do not commit any personal finance records, private backup JSON, passwords, tokens, or source demo files. The website's static files are public.
+## 初めて使う
+
+1. 本番URLを開き、パスワードを設定します。忘れたパスワードは復旧できません。
+2. 「初期設定を開く」→「バックアップから設定を引き継ぐ」。本体テスト版#101以降の暗号化バックアップを選び、その保存時のパスワードで解除します。
+3. 口座・支払方法・カード・配置・メモ候補を取り込みます。予算・特別費・グループとメンバーは任意選択です。テストの記録・残高・確定請求・引落済み状態は取り込みません。
+4. 開始日と、その日の最初の記録の直前の実際の口座・現金・電子マネー残高を入力します。残高なしは0円を入力します。
+5. 開始前に使った未払いカード代はカードと引落日ごと、貸し借りはまだ受け取る／支払う残額だけ入力します。
+6. 内容を確認して「この内容で始める」。本番のバックアップを保存します。
+
+テスト版のバックアップを「バックアップから復元」で全件復元することはできません。初期設定の設定引き継ぎを使ってください。Miniのバックアップには未対応です。
+Miniを手入力で移すなら開始日以降の記録だけを対象にし、開始残高・開始前の未払い・貸し借りと二重登録しないでください。Miniの記録とバックアップは移し終えるまで保管します。
+
+## 継続仕様と範囲
+
+記録・履歴・集計・ポイント・内訳・グループ・開始時点設定・カード引落と取消は#106を継承。保存形式10。AES-GCM 256bit／PBKDF2 SHA-256 600,000回。再読み込み時および画面を離れて5分でパスワード解除が必要。生体認証・自動同期・Mini自動移行は追加していません。
+給与サイクルに合わせた残高予測・引落準備額は未対応です。未実装の見込みを0円や現在残高として表示する箇所は説明表示に変更しました。カード請求の計算は継続します。
+テスト版と本番版は別の保存領域です。同じGitHub Pagesドメインの別パスはセキュリティ境界ではありません。
+パスワードと鍵は保存せず、暗号化データはブラウザ内に保存します。ブラウザデータ消去・端末故障に備え、暗号化バックアップを端末外にも保管してください。公開リポジトリにはアプリ7ファイルだけを置き、バックアップは置かないでください。
+
+## 検証
+
+本番パッケージで暗号化往復・誤パスワード・改ざん拒否・別タブ競合・設定のみの移行・テスト全件復元の拒否・本番再読込・保存先分離・誤配置の保存拒否をコード実行で確認。#105の設定引き継ぎと#106の引落取消も再確認。
+#106の実機で開始残高、貸し借り清算、カード引落と取消は利用者確認済み。本番URLへの公開とその端末での初回設定は未実施です。

@@ -1,0 +1,177 @@
+/* Money Keeper production 1.0. Encrypted backup and restore.
+   Add <script src="backup.js"></script> AFTER app.js in index.html. */
+(() => {
+  'use strict';
+  const FORMAT = 'money-keeper-backup';
+  const MAX_BYTES = 10 * 1024 * 1024;
+  const REQUIRED_ARRAYS = ['txs', 'cashbook', 'snapshots', 'wishes', 'recurring', 'eventsData', 'loanGroups'];
+  const OPTIONAL_ARRAYS = ['loans', 'deletedEventNames', 'loanArchivedPeople'];
+  const OPTIONAL_OBJECTS = ['billAdjustments', 'billItemAdjustments', 'categoryBudgets', 'chargeDefaults'];
+
+  function status(text, isError = false) {
+    const el = document.getElementById('mk-backup-status');
+    if (el) {
+      el.textContent = text;
+      el.style.color = isError ? '#b94242' : '#486c57';
+    }
+  }
+
+  function validate(data) {
+    if (!data || typeof data !== 'object' || Array.isArray(data)) throw Error('データの形式が正しくありません。');
+    for (const key of REQUIRED_ARRAYS) {
+      if (!Array.isArray(data[key])) throw Error(key + ' が正しくありません。');
+    }
+    for (const key of OPTIONAL_ARRAYS) {
+      if (data[key] !== undefined && !Array.isArray(data[key])) throw Error(key + ' が正しくありません。');
+    }
+    if (!data.balances || typeof data.balances !== 'object' || Array.isArray(data.balances)) throw Error('残高データが正しくありません。');
+    for (const [key, value] of Object.entries(data.balances)) {
+      if (typeof value !== 'number' || !Number.isFinite(value)) throw Error('残高 ' + key + ' が正しくありません。');
+    }
+    for (const key of OPTIONAL_OBJECTS) {
+      if (data[key] !== undefined && (!data[key] || typeof data[key] !== 'object' || Array.isArray(data[key]))) throw Error(key + ' が正しくありません。');
+    }
+    if (data.monthlyBudget !== undefined && (!Number.isSafeInteger(data.monthlyBudget) || data.monthlyBudget < 0)) throw Error('月予算が正しくありません。');
+    if (data.loanGroupSerial !== undefined && !Number.isSafeInteger(data.loanGroupSerial)) throw Error('グループ番号が正しくありません。');
+    for (const key of REQUIRED_ARRAYS) {
+      for (const item of data[key]) {
+        if (!item || typeof item !== 'object' || Array.isArray(item)) throw Error(key + ' の内容が正しくありません。');
+      }
+    }
+    if(data.mkMemoData!==undefined)mkMemoValidate(data.mkMemoData);
+    mkValidateStoredSettings(data);
+    if(MKStorage.production&&data.mkOpening?.environment!=='production')throw Error('本番では本番用バックアップのみ復元できます。テスト版からは初期設定で設定だけを引き継いでください。');
+    return data;
+  }
+
+  function checkStorage(forImport = false) {
+    if (typeof mkStorageReady === 'undefined' || !(forImport ? mkCanRestore : MKStorage.isUnlocked())) throw Error('ブラウザ保存が利用できません。');
+    if (typeof mkState !== 'function' || typeof MKStorage === 'undefined' || typeof MKMigrations === 'undefined') throw Error('保存機能が見つかりません。');
+  }
+
+  async function exportBackup() {
+    try {
+      checkStorage();
+      const data = structuredClone(mkState());
+      validate(data);
+      const d = new Date();
+      const payload = await MKStorage.exportEncrypted(data);
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const date = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+      const time = [d.getHours(), d.getMinutes(), d.getSeconds()].map(n => String(n).padStart(2, '0')).join('');
+      a.href = url;
+      a.download = `MK_${date}_${time}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      status('バックアップのダウンロードを開始しました。Chromeのダウンロード一覧を確認してね。');
+    } catch (e) {
+      console.error('Money Keeper backup export failed:', e);
+      status('バックアップ失敗：' + e.message, true);
+    }
+  }
+
+  let restoring=false;
+  async function importBackup(file) {
+    if (!file||restoring) return;
+    try {
+      checkStorage(true);
+      if (file.size > MAX_BYTES) throw Error('ファイルが大きすぎます（10MBまで）。');
+      const payload = JSON.parse(await file.text());
+      let restored;
+      if(payload?.format==='money-keeper-encrypted'){
+        restored=await MKSecurity.prompt('バックアップの解除',false,pw=>MKStorage.decryptBackup(payload,pw),true,'このバックアップを保存したときのパスワードを入力してください。');
+        if(restored===null)return;
+      }else{
+        if(MKStorage.production||payload?.format!==FORMAT||payload.backupVersion!==1)throw Error('対応するバックアップではありません。');
+        restored=MKMigrations.upgrade(payload).data;
+      }
+      const data = MKMigrations.renameCategories(validate(restored));
+      const answer = confirm(
+        '【テスト版】現在のデータをバックアップ内容で全て置き換えます。\n\n' +
+        'バックアップ日時：' + (payload.savedAt || payload.exportedAt || '不明') + '\n' +
+        '記録：' + data.txs.length + '件\n\n' +
+        '元に戻すことはできません。現在のデータは別にバックアップした？'
+      );
+      if (!answer) {
+        status('復元をキャンセルしました。');
+        return;
+      }
+      // Prevent a delayed save of the pre-restore state from overwriting imported data.
+      if (typeof mkSaveTimer !== 'undefined') {
+  clearTimeout(mkSaveTimer);
+  mkSaveTimer = null;
+}
+      const readyBefore=mkStorageReady;mkStorageReady=false;restoring=true;
+      document.getElementById('mk-import').disabled=true;
+      const locked=[document.querySelector('.app'),document.querySelector('.bottom')].filter(Boolean);
+      locked.forEach(el=>el.inert=true);
+      try{if(!MKStorage.isUnlocked()){const done=await MKSecurity.prompt('復元後のパスワード設定',true,async pw=>{await MKStorage.recover(data,pw);return true},true);if(!done)return}else await MKStorage.save(structuredClone(data))}
+      catch(e){mkStorageReady=readyBefore;throw e}
+      finally{locked.forEach(el=>el.inert=false);restoring=false;document.getElementById('mk-import').disabled=!mkCanRestore;}
+      status('復元データを保存しました。再読み込みします。');
+      location.reload();
+    } catch (e) {
+      console.error('Money Keeper backup import failed:', e);
+      status('復元できませんでした：' + e.message, true);
+    }
+  }
+
+  function mount() {
+    if(!mkStorageReady&&!mkSetupMode)return;
+    const other = mkSetupMode ? document.getElementById('mkSetupBackup') : document.querySelector('#other section');
+    if (!other || document.getElementById('mk-backup-card')) return;
+    const card = document.createElement('div');
+    card.id = 'mk-backup-card';
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="mid">📦 バックアップ・復元</div>
+      <div class="small" style="margin:8px 0 12px">
+        データを暗号化したJSONファイルとしてスマホに保存できます。解除には保存時のパスワードが必要です。
+        復元すると、今のブラウザ内データはバックアップの内容に置き換わります。
+      </div>
+      <button type="button" id="mk-export" class="outline" style="width:100%;margin-bottom:10px">バックアップを保存</button>
+      <button type="button" id="mk-import" class="outline" style="width:100%">バックアップから復元</button>
+      <input id="mk-import-file" type="file" accept=".json,application/json" style="display:none">
+      <div id="mk-backup-status" class="small" role="status" aria-live="polite" style="margin-top:10px"></div>
+      <div class="small" style="margin-top:8px">暗号化バックアップは端末外にも保管してください。公開GitHubにはアップロードしないでください。</div>`;
+    if(mkSetupMode){card.querySelector('#mk-export').hidden=true;card.querySelector('#mk-import').disabled=!mkCanRestore;}
+    if(MKStorage.isUnlocked()){
+      const actions=document.createElement('div');actions.className='mk-security-actions';
+      for(const [title,fn] of [['ロックする',MKSecurity.lock],['パスワード変更',MKSecurity.change]]){const b=document.createElement('button');b.type='button';b.className='outline';b.textContent=title;b.onclick=fn;actions.append(b)}
+      const note=document.createElement('p');note.className='small';note.textContent='画面を離れて5分経つとロックします。再読み込み・起動時はパスワードが必要です。';card.append(note,actions);
+    }
+    other.appendChild(card);
+    card.querySelector('#mk-export').addEventListener('click', exportBackup);
+    const fileInput = card.querySelector('#mk-import-file');
+    card.querySelector('#mk-import').addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files?.[0];
+      fileInput.value = '';
+      importBackup(file);
+    });
+  }
+  window.mkRecoverBackup=()=>{
+    const input=document.createElement('input');input.type='file';input.accept='.json,application/json';
+    input.onchange=async()=>{
+      const file=input.files?.[0];if(!file)return;
+      try{
+        if(file.size>MAX_BYTES)throw Error('ファイルは10MBまでです。');
+        const payload=JSON.parse(await file.text());let data;
+        if(payload?.format==='money-keeper-encrypted')data=await MKSecurity.prompt('バックアップの解除',false,pw=>MKStorage.decryptBackup(payload,pw),true,'バックアップ保存時のパスワードを入力してください。');
+        else if(!MKStorage.production&&payload?.format===FORMAT&&payload.backupVersion===1)data=MKMigrations.upgrade(payload).data;
+        else throw Error('対応するバックアップではありません。');
+        if(!data){location.reload();return}validate(data);
+        if(!confirm('端末の保存データをこのバックアップで置き換えます。よろしいですか？')){location.reload();return}
+        await MKSecurity.prompt('復元後のパスワード設定',true,async pw=>{await MKStorage.recover(data,pw);return true},true);
+        location.reload();
+      }catch(e){alert('復元できませんでした：'+e.message);location.reload()}
+    };input.click();
+  };
+  window.mkMountBackup=mount;
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount);
+  else mount();
+})();

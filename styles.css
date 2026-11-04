@@ -257,3 +257,714 @@
 /* Step9.5: 履歴の編集・削除を各記録の右下に固定 */
 .history-item-sub{align-items:stretch}
 .history-actions{align-self:flex-end;margin:0;flex:none}
+
+/* Analytics and bottom navigation additions */
+.bottom .nav{font-family:Arial,"Noto Sans JP",sans-serif;font-weight:650;letter-spacing:0} .bottom .nav-icon{display:block;height:25px;margin-bottom:3px;color:#444348}.bottom .nav-icon svg{height:24px;width:24px}.bottom .nav.active .nav-icon{color:#bf477a}.analysis-donut{height:176px;width:176px;border-radius:50%;margin:16px auto;display:grid;place-items:center}.analysis-donut>div{width:105px;height:105px;background:#fff;border-radius:50%}.analysis-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:7px}.analysis-bar-row{display:grid;grid-template-columns:65px 1fr auto;gap:8px;align-items:center;margin:9px 0;font-size:12px}.analysis-bar-row strong{font-size:12px}.analysis-bar-track{height:9px;background:#f5eaf0;border-radius:20px;overflow:hidden}.analysis-bar-track i{display:block;height:100%;background:#d77fa3;border-radius:20px}.analysis-trend-category{padding:10px 0;border-top:1px solid #f0e5e9}
+/* Simplified analysis dashboard and opt-in historical trends */
+.mk-analysis .card{background:#fff;border-radius:22px;padding:20px;margin-bottom:14px}.mk-analysis .mid{margin-bottom:12px}.mk-finance-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}.mk-finance-tile{padding:16px;border-radius:15px;background:#f6f4f5;display:flex;flex-direction:column;gap:10px}.mk-finance-tile.pink{background:#fff0f5}.mk-finance-tile span{color:#80747a;font-size:13px}.mk-finance-tile strong{font-size:21px;color:#218b78}.mk-finance-tile.pink strong{color:#b8557d}.mk-net{margin-top:15px;padding-top:15px;border-top:1px solid var(--line)}.mk-total-budget{font-size:26px;font-weight:800;margin:8px 0 16px}.mk-trend-action{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:12px}.mk-category-row{padding:14px 0;border-bottom:1px solid var(--line)}.mk-category-row:last-child{border-bottom:0}.mk-category-row .progress{margin:9px 0 6px}.mk-over-budget{color:#b94450;font-weight:700}.mk-trend-overlay{position:fixed;inset:0;z-index:999;background:#fff8fb;overflow:auto;padding:18px 12px 30px}.mk-trend-overlay.hidden{display:none}.mk-trend-panel{max-width:650px;margin:auto;background:white;border:1px solid var(--line);border-radius:22px;padding:17px}.mk-trend-chart{overflow-x:auto;overscroll-behavior-x:contain;padding:22px 0 10px}.mk-trend-plot{display:flex;align-items:flex-end;gap:9px;width:max-content;min-height:255px;border-bottom:1px solid #d6c8ce;padding:0 8px}.mk-trend-column{border:0;background:transparent;padding:0;display:flex;align-items:center;flex-direction:column;justify-content:flex-end;gap:7px;width:48px;color:#40353b;cursor:pointer}.mk-trend-bar{display:block;width:33px;min-height:2px;border-radius:10px 10px 0 0;background:#f4b6ce}.mk-trend-column.selected .mk-trend-bar{background:#d85c90}.mk-trend-amount{font-size:10px;white-space:nowrap;font-weight:700}.mk-trend-month{font-size:11px;white-space:nowrap}.mk-trend-history{max-height:310px;overflow-y:auto;overscroll-behavior:contain}.mk-trend-history-row{padding:12px 2px;border-bottom:1px solid var(--line)}
+
+.mk-trend-history-meta{display:flex;flex-direction:column;gap:4px}.mk-trend-history-meta small{color:#82777c;font-size:11px}
+
+.mk-budget-card .mid,.mk-categories-card .mid{margin-bottom:10px}
+.mk-budget-line{min-height:38px}
+.mk-budget-line>span{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.mk-budget-line strong{font-weight:750}
+.mk-budget-progress{margin:8px 0 9px}
+.mk-category-row{padding:12px 0}
+.mk-category-top{gap:6px}
+.mk-category-top>strong{min-width:0;overflow-wrap:anywhere}
+.mk-category-spend{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.mk-category-muted{font-size:11px;color:var(--muted)}
+.mk-category-action{padding:5px 8px;font-size:11px;white-space:nowrap}
+.mk-category-progress{margin:8px 0 6px!important}
+.mk-category-bottom{font-size:12px;color:var(--muted);gap:6px;min-height:26px}
+.mk-category-budget{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+
+/* Refinements agreed after mobile screenshots */
+.mk-budget-card .mk-budget-line{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;min-height:43px}
+.mk-budget-card .mk-budget-line>span{min-width:0;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;font-size:14px}
+.mk-budget-card .mk-budget-line strong{font-size:15px}
+.mk-budget-card .mk-budget-line button{justify-self:end;min-width:52px;margin:2px 0}
+.mk-budget-card .mk-unset{font-size:12px!important;font-weight:500!important;color:#8a7f84}
+.mk-budget-card>.row:last-child{align-items:center;gap:10px}
+.mk-budget-card>.row:last-child strong{font-size:16px}
+.mk-categories-card .mk-category-row{padding:11px 0}
+.mk-categories-card .mk-category-top{align-items:center}
+.mk-categories-card .mk-category-top>strong{font-size:14px}
+.mk-categories-card .mk-category-spend{gap:5px}
+.mk-categories-card .mk-category-spend>strong{font-size:14px}
+.mk-categories-card .mk-category-bottom{font-size:12px;margin-top:3px}
+.mk-categories-card .mk-category-action{font-size:11px;padding:5px 8px;flex:none}
+@media(max-width:370px){
+ .mk-categories-card .mk-category-top{flex-wrap:wrap}
+ .mk-categories-card .mk-category-spend{margin-left:auto}
+}
+
+/* Compact monthly income/expense summary, leaving other cards untouched */
+.mk-analysis .card:has(.mk-finance-pair){padding:15px 18px 13px}
+.mk-analysis .card:has(.mk-finance-pair) .mid{margin-bottom:9px}
+.mk-finance-pair{gap:9px}
+.mk-finance-tile{padding:11px 13px;gap:5px;border-radius:14px}
+.mk-finance-tile strong{font-size:20px}
+.mk-net{margin-top:10px;padding-top:10px}
+.bottom .nav-icon{height:25px}
+.bottom .nav-icon svg{width:24px;height:24px}
+
+/* Budget editor is confined to the visible viewport; only the sheet scrolls. */
+#moneyPromptModal{overscroll-behavior:contain;touch-action:none}
+#moneyPromptModal .sheet{max-height:100%;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch}
+
+/* Inline category budget editor: no overlay or background scroll locking. */
+.mk-inline-budget{margin-top:10px;padding:12px;border:1px solid #eadde2;border-radius:12px;background:#fffafc;display:flex;flex-direction:column;gap:8px}
+.mk-inline-budget label{font-size:13px;font-weight:600}
+.mk-inline-budget-field{display:flex;align-items:center;gap:8px;background:white;border:1px solid #dfd9de;border-radius:10px;padding:7px 12px}
+.mk-inline-budget-field span{font-weight:600;color:#777}
+.mk-inline-budget-field input{min-width:0;width:100%;border:0!important;background:transparent!important;box-shadow:none!important;font-size:18px;padding:4px 0!important;outline:none}
+.mk-inline-budget-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mk-inline-budget-actions button{min-height:40px}
+
+/* Monthly analysis refresh (2026-10-16): matching compact tiles */
+.mk-analysis .mk-summary-card .mk-finance-tile strong,
+.mk-analysis .mk-budget-card .mk-finance-tile strong{color:#494148;font-size:20px;font-weight:800;line-height:1.3;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.mk-analysis .mk-budget-card{padding:15px 18px 13px}
+.mk-analysis .mk-budget-card .mid{margin-bottom:9px}
+.mk-analysis .mk-budget-tiles .mk-finance-tile{min-width:0;gap:6px}
+.mk-analysis .mk-tile-head{display:flex;align-items:center;justify-content:space-between;gap:3px;min-width:0}
+.mk-analysis .mk-tile-head span{font-size:12px;white-space:nowrap}
+.mk-analysis .mk-tile-head button{flex:none;font-size:10px;padding:5px 6px;min-width:0;line-height:1.2}
+.mk-analysis .mk-budget-card .mk-unset{font-size:12px!important;font-weight:500!important;color:#8a7f84!important}
+.mk-analysis .mk-budget-remain{display:flex;justify-content:flex-end;align-items:baseline;gap:8px;font-size:13px}
+.mk-analysis .mk-budget-remain strong{font-size:16px}
+.mk-analysis .mk-negative{color:#c14354!important}
+.mk-inline-budget-entry{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:stretch;gap:8px}
+.mk-inline-budget-entry .mk-inline-budget-field{min-width:0}
+.mk-inline-budget-confirm{min-height:40px;min-width:68px;padding:8px 13px;border-radius:10px;font-weight:750;white-space:nowrap}
+.mk-inline-budget-field input{caret-color:#70515f}
+@media(max-width:360px){.mk-analysis .mk-finance-tile{padding:10px}.mk-analysis .mk-tile-head span{font-size:11px}.mk-analysis .mk-tile-head button{padding:4px 5px}}
+
+/* 2026-10-16: Consistent action-button palette (visual-only update). */
+/* Primary actions: replace the previous charcoal background. */
+.btn{background:#c67596;color:#fff}
+.btn:hover{background:#b96789}
+.btn:active{background:#a9587b}
+/* Inline budget confirmation stays gentle and visually distinct. */
+.mk-inline-budget-confirm{background:#fce8f0;color:#9d315d;border:1px solid #f4d6e2}
+.mk-inline-budget-confirm:hover{background:#f8dbe7}
+/* Controls inside tinted monthly summary tiles need a visible outline. */
+.mk-analysis .mk-budget-tiles .mk-tile-head button{
+  background:#fff;
+  border:1px solid #c98ba4;
+  color:#8f4868;
+  border-radius:9px;
+  font-weight:700;
+}
+.mk-analysis .mk-budget-tiles .mk-tile-head button:focus-visible,
+.btn:focus-visible,.mk-inline-budget-confirm:focus-visible{
+  outline:2px solid #a95477;outline-offset:2px;
+}
+
+/* Loan actions: separate add/organize from edit/delete and archive. */
+.loan-card-actions .loan-action-primary{background:#f4dfe9;color:#9b4e72;border:1px solid #e9c6d7;font-weight:750}
+.loan-card-actions .loan-action-primary:hover{background:#edd0df}
+.loan-card-archive,.loan-restore{background:#f1edf3!important;color:#77697e!important;border:1px solid #ded5e2!important}
+
+/* Compact home TODO */
+.mk-todo-card{height:auto!important;min-height:0!important}.mk-todo-count{font-size:12px;color:#8b7b85;font-weight:500}.mk-todo-row{display:flex;align-items:center;border-bottom:1px solid rgba(120,110,120,.12);min-height:41px}.mk-todo-link{flex:1;display:flex;align-items:center;gap:7px;border:0;background:transparent;color:inherit;text-align:left;padding:9px 0;min-width:0;font-size:13px}.mk-todo-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mk-todo-date{font-size:11px;color:#8b7b85;white-space:nowrap}.mk-todo-options{border:0;background:transparent;color:#9b7889;padding:7px 4px;font-size:18px}.mk-todo-more{display:block;width:100%;border:0;background:transparent;color:#9d6784;padding:10px 0 0;font-size:12px}.mk-todo-empty{padding:10px 0}.mk-loan-todo-btn{border:1px solid #e4c4d3;background:#fff6fa;color:#a05b7e;border-radius:7px;padding:5px 7px;font-size:11px;white-space:nowrap}
+
+/* TODO usability update */
+.mk-todo-heading{font-size:19px;font-weight:800;display:flex;align-items:center;gap:7px;white-space:nowrap}
+.mk-todo-heading-icon{font-size:19px;color:#bd7295;font-weight:500}.mk-todo-header{align-items:center}.mk-todo-count{font-size:12px;margin-top:3px}
+.mk-todo-row{min-height:52px;gap:8px}.mk-todo-check{width:19px;height:19px;accent-color:#bc7295;flex:none;margin:0 2px 0 0}
+.mk-todo-link{font-size:15px;padding:12px 0;min-width:0;gap:5px}.mk-todo-title{white-space:normal;line-height:1.4}.mk-todo-date{font-size:11px}
+.mk-todo-important .mk-todo-title{color:#a44d75;font-weight:750}.mk-todo-star{color:#b85d85}.mk-todo-detail{border:1px solid #e8dce2;background:#fff;border-radius:10px;color:#795965;padding:7px 9px;font-size:11px;white-space:nowrap;flex:none}
+.mk-todo-more[hidden],.mk-todo-overlay[hidden],.mk-todo-delete[hidden]{display:none!important}
+.mk-todo-overlay{position:fixed;inset:0;z-index:10000;background:#0006;display:flex;align-items:center;justify-content:center;padding:16px}
+.mk-todo-sheet{width:min(100%,460px);max-height:90vh;overflow:auto;background:#fff;border-radius:22px;padding:22px;box-shadow:0 12px 35px #0002}
+.mk-todo-sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}.mk-todo-sheet-head h2{font-size:22px;margin:0}
+.mk-todo-label{display:block;color:#777;margin-bottom:8px}.mk-todo-title-input{width:100%;box-sizing:border-box;border:1px solid #ddd;border-radius:14px;padding:13px;font-size:16px}
+.mk-todo-setting-head{display:flex;align-items:center;justify-content:space-between;margin-top:24px;margin-bottom:14px}.mk-todo-emphasis{display:flex;align-items:center;gap:5px;font-size:15px}.mk-todo-emphasis input{accent-color:#bd7295;width:19px;height:19px}
+.mk-todo-date-row{display:flex;align-items:center;gap:12px;flex-wrap:nowrap}.mk-todo-no-date,.mk-todo-date-choice{display:flex;align-items:center;gap:5px;min-width:0;white-space:nowrap;font-size:14px}.mk-todo-date-row input[type=radio]{accent-color:#bd7295;width:18px;height:18px;flex:none}.mk-todo-date-choice{flex:1}.mk-todo-date-choice input[type=date]{min-width:0;width:100%;box-sizing:border-box;border:1px solid #ddd;border-radius:12px;padding:9px 5px;font-size:14px;background:#fff}
+.mk-todo-modal-actions{display:flex;gap:10px;margin-top:24px}.mk-todo-modal-actions .btn{flex:1}.mk-todo-delete{color:#b94242;border-color:#e5bfc7}
+.loan-person-card:not(.is-archived) .loan-summary-row{position:relative;align-items:center}.loan-person-card:not(.is-archived) .loan-summary-head{min-height:76px;padding-right:4px}
+.mk-loan-todo-btn{align-self:center;flex:none;padding:5px 7px;font-size:11px;line-height:1.3;min-height:27px;max-width:70px}
+@media(max-width:380px){.mk-todo-heading{font-size:17px}.mk-todo-date-row{gap:5px}.mk-todo-no-date,.mk-todo-date-choice{font-size:12px}.mk-todo-sheet{padding:17px}.mk-todo-date-choice input[type=date]{font-size:12px}}
+
+/* TODO final test refinements */
+.mk-todo-heading{gap:8px}.mk-todo-count{margin-top:0;font-size:12px;color:#8b7b85;font-weight:500}.mk-todo-check:disabled{opacity:.35;cursor:not-allowed}.mk-todo-section-toggle{display:block;width:100%;padding:11px 0 6px;background:transparent;border:0;text-align:left;color:#806c78;font-size:12px;font-weight:700}.mk-todo-archive-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;font-size:12px;color:#80757b}.mk-todo-archive-row label{display:flex;align-items:center;gap:8px}.mk-todo-archive-row input{width:18px;height:18px;accent-color:#b86b86}.mk-todo-archive-row .outline{font-size:11px;padding:5px 9px}.mk-todo-modal-actions{flex-wrap:wrap}.mk-todo-modal-actions #mkTodoSave{flex-basis:100%;order:-1;background:#b86b86}.mk-todo-modal-actions #mkTodoHide,.mk-todo-modal-actions #mkTodoDelete{flex:1}.mk-todo-modal-actions #mkTodoHide[hidden]{display:none!important}
+
+/* 2026-10-17: confirmed compact actions, no other form layout changes */
+.mk-todo-modal-actions #mkTodoDelete{flex:2 1 0;min-width:0}
+.mk-todo-modal-actions #mkTodoHide{flex:3 1 0;min-width:0;white-space:nowrap;padding-left:3px;padding-right:3px}
+.mk-todo-modal-actions #mkTodoSave{flex:5 1 0;min-width:0}
+.mk-todo-modal-actions{gap:6px}
+.loan-person-card:not(.is-archived) .loan-summary-row{display:flex;align-items:center}
+.mk-loan-summary-actions{display:flex;align-items:center;gap:5px;flex:none;margin-left:auto}
+.mk-loan-summary-actions .mk-loan-todo-btn,.mk-loan-summary-actions .loan-card-archive{box-sizing:border-box;height:29px;min-height:29px;max-width:none;align-self:center;display:inline-flex;align-items:center;justify-content:center;line-height:1.1;font-size:10px;padding:5px 7px;border-radius:9px;white-space:nowrap}
+.mk-loan-summary-actions .mk-loan-todo-btn{background:#fbedf2;color:#a45272;border:1px solid #e7b9c9}
+.mk-loan-summary-actions .mk-loan-todo-btn.mk-loan-todo-active{background:#f1f0f4;color:#77717d;border:1px solid #ded9e1}
+.mk-loan-summary-actions .loan-card-archive{background:#fff!important;color:#77717d!important;border:1px solid #ddd7dc!important}
+.loan-person-card:not(.is-archived) .loan-summary-side{padding-left:2px;padding-right:9px;gap:0}
+@media(max-width:380px){.mk-loan-summary-actions{gap:3px}.mk-loan-summary-actions .mk-loan-todo-btn,.mk-loan-summary-actions .loan-card-archive{font-size:9px;padding:5px}}
+
+/* 2026-10-17: final single-row TODO actions; overrides previous full-width save */
+.mk-todo-modal-actions{display:flex!important;flex-wrap:nowrap!important;gap:6px;align-items:stretch}
+.mk-todo-modal-actions #mkTodoDelete{order:0!important;flex:2 1 0!important;font-size:12px!important;padding:10px 2px;min-width:0}
+.mk-todo-modal-actions #mkTodoHide{order:1!important;flex:3 1 0!important;font-size:12px!important;padding:10px 2px;min-width:0;white-space:nowrap}
+.mk-todo-modal-actions #mkTodoSave{order:2!important;flex:5 1 0!important;flex-basis:0!important;width:auto!important;min-width:0;font-size:15px!important}
+.mk-rakpay-source{margin-top:9px;padding:10px;border:1px solid #eadfe3;border-radius:12px;background:#fff9fb}
+.mk-rakpay-source .small{margin-bottom:6px}.mk-rakpay-source .mini{flex:1;min-width:0}
+
+.mk-category-link{border:0;background:transparent;color:inherit;font:inherit;font-weight:700;cursor:pointer;padding:3px 2px;text-decoration:underline;text-decoration-color:rgba(120,120,120,.35);text-underline-offset:3px}
+
+/* Compact record editor: presentation only; preserve existing form field IDs. */
+#editBody .mk-edit-pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:end;margin-bottom:10px}
+#editBody .mk-edit-pair .field{min-width:0;margin:0}
+#editBody .mk-edit-pair input,#editBody .mk-edit-pair select{min-width:0;width:100%;box-sizing:border-box;text-overflow:ellipsis}
+#editBody .mk-edit-details{border:1px solid #eadfe4;border-radius:15px;background:#fcf3f6;padding:12px;margin:10px 0}
+#editBody .mk-edit-details summary{font-weight:750;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}
+#editBody .mk-edit-details summary::after{content:'＋';font-size:21px;line-height:1;font-weight:500}
+#editBody .mk-edit-details[open] summary::after{content:'－'}
+#editBody .mk-edit-detail-hint{font-size:12px;color:#857a80;margin:5px 0 9px;overflow-wrap:anywhere}
+#editBody .mk-edit-details .mk-edit-pair{margin-top:8px}
+#editBody .mk-edit-details .field{margin:8px 0 0}
+@media(max-width:370px){#editBody .mk-edit-pair{gap:7px}}
+
+/* Compact edit modal: record type uses the existing muted pink palette. */
+.mk-edit-kind{color:#bc718e;font-size:.78em;font-weight:750;white-space:nowrap}
+#editModal .sheet .row{gap:8px}
+#editModal .sheet-title{min-width:0;white-space:nowrap;font-size:clamp(17px,4.5vw,21px)}
+#editBody .mk-edit-pair .field{min-width:0}
+#editBody .mk-edit-pair input,#editBody .mk-edit-pair select{max-width:100%;text-overflow:ellipsis}
+
+/* Next test build: history reset, compact sticky month and bill action */
+#histTypeBtns{align-items:center}
+.mk-hist-reset{margin-left:auto;padding:7px 9px;border:1px solid #d5a2b7;border-radius:11px;background:#fff8fb;color:#a65e7d;font-size:11px;font-weight:750;white-space:nowrap}
+.mk-hist-reset.is-inactive{opacity:.42;cursor:default}
+#mkMonthSentinel{height:0;pointer-events:none}
+#budget .mk-month-sticky{position:sticky;top:0;z-index:24;background:rgba(255,253,253,.98);box-shadow:0 2px 6px rgba(60,30,45,.03);}
+
+.mk-card-heading{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.mk-card-heading .item-title{min-width:0}
+.mk-bill-check{flex:none;padding:10px 12px;min-height:40px;background:#fff;border:1px solid #dca8bd;border-radius:11px;color:#a75d7b;font-size:12px;font-weight:750;white-space:nowrap;line-height:1.25;transform:translateY(7px)}
+
+/* Edit screen: delete action in header, cancel and save at bottom. */
+#editModal .mk-edit-delete{flex:none;background:#fff8f8;border:1px solid #e9c3ca;color:#b44d66;border-radius:10px;padding:9px 12px;font-size:13px;font-weight:700;min-height:38px}
+
+/* Recent records: float the action beside details rather than adding a separate row. */
+.mk-recent-heading{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.mk-recent-heading .item-title{min-width:0;overflow-wrap:anywhere}
+.mk-recent-heading strong{flex:none;white-space:nowrap}
+.mk-recent-detail{display:flow-root;margin-top:4px;min-height:36px}
+.mk-recent-detail .item-meta{margin-top:0;overflow-wrap:anywhere}
+.mk-recent-edit{float:right;margin:0 0 2px 9px;min-height:32px;min-width:48px}
+/* Completed todo actions remain in one row, including long titles. */
+.mk-todo-archive-row label{flex:1;min-width:0;overflow-wrap:anywhere}
+.mk-todo-completed-delete{flex:none;background:#fff!important;border:1px solid #e7dfe3!important;color:#7b7074!important;font-weight:650}
+
+/* 2026-10-18: lighten only small secondary action labels; preserve their geometry and palette. */
+.mk-recent-edit,
+.history-actions .ghost,
+.loan-record-actions .ghost,
+.mk-todo-completed-delete,
+.mk-analysis .mk-budget-tiles .mk-tile-head button,
+.mk-analysis .mk-category-action,
+.rec-actions .ghost.sm {font-weight:400!important;}
+/* Pausing a recurring payment is a cautionary action, not deletion. */
+.rec-actions .mk-recurring-pause {color:#a65b67!important;}
+
+/* 2026-10-18: recent edit matches the compact history controls. */
+.mk-recent-edit{min-height:0;min-width:0;padding:6px 8px;font-size:11px}
+/* A quiet, optional reference total below the category list. */
+.mk-category-budget-sum{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid var(--line);margin-top:10px;padding-top:12px;color:var(--muted);font-size:12px}
+.mk-category-budget-sum strong{font-size:13px;color:var(--ink);font-weight:600;white-space:nowrap}
+/* Wishlist: compact actions, notes, and no overall price total. */
+.mk-wish-info{flex:1;min-width:0;overflow-wrap:anywhere}.mk-wish-item .row{align-items:flex-start}.mk-wish-item strong{white-space:nowrap}.mk-wish-memo{white-space:pre-wrap}.mk-wish-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:7px}.mk-wish-actions .ghost{font-weight:400!important}
+
+/* 2026-10-18 follow-up: keep wishlist inputs consistent with the app palette. */
+#wishlist input:focus,#wishlist textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(184,107,134,.13)}
+#wishlist .money-input.mk-money-input:focus-within{border-color:var(--accent);box-shadow:0 0 0 2px rgba(184,107,134,.13)}
+#wishlist .money-input.mk-money-input input:focus{outline:none!important;box-shadow:none!important}
+/* Match the history action button, including its exact box sizing. */
+#recent .mk-recent-edit{padding:6px 8px!important;font-size:11px!important;min-height:0!important;min-width:0!important;line-height:normal!important;border-radius:10px!important;font-weight:400!important}
+
+/* Unified focus treatment: only active editable fields */
+input:focus,textarea:focus,select:focus,.money-input:focus-within{outline:none!important;border-color:#c77c9b!important;box-shadow:0 0 0 3px rgba(199,124,155,.17)!important}
+.money-input:focus-within input{box-shadow:none!important;border:0!important;outline:none!important}
+textarea{resize:none!important}
+.field input,.field select,.field textarea{box-sizing:border-box;max-width:100%;border-radius:13px}
+.field input:not([type=checkbox]),.field select{min-height:46px}
+.mk-money-input input{min-height:42px!important}
+
+
+/* Wishlist final: single card and shared add/edit popup. */
+.mk-wish-card .mk-wish-header{margin-bottom:6px;gap:12px}
+.mk-wish-card .mk-wish-header .mid{font-size:19px}
+.mk-wish-row{display:flex;width:100%;align-items:center;gap:10px;padding:17px 1px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.mk-wish-row:last-child{border-bottom:0}
+.mk-wish-row:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:9px}
+.mk-wish-row .mk-wish-info{display:flex;flex:1;min-width:0;flex-direction:column;gap:4px}
+.mk-wish-name{font-size:15px;font-weight:750;overflow-wrap:anywhere}
+.mk-wish-row .mk-wish-memo{font-size:12px;color:var(--muted);font-weight:400;white-space:pre-wrap;overflow-wrap:anywhere}
+.mk-wish-price{font-size:15px;font-weight:700;white-space:nowrap}
+.mk-wish-chevron{font-size:24px;line-height:1;color:#ad9ba4;margin-left:2px}
+.mk-wish-empty{padding:15px 0 5px}
+.mk-wish-sheet{max-height:calc(100dvh - 45px);overflow-y:auto}
+.mk-wish-modal-head{gap:8px;margin-bottom:12px}
+.mk-wish-modal-head .sheet-title{min-width:0;font-size:20px}
+.mk-wish-delete{flex:none;color:#b14f69!important;border-color:#edc5d0!important;background:#fff7f9!important;padding:8px 13px;font-size:12px}
+.mk-wish-form-actions{margin-top:16px}
+.mk-wish-form-actions button{min-width:0}
+#wishModal textarea{resize:none}
+
+.mk-bill-nav{display:flex;justify-content:space-between;gap:8px;margin:12px 0}.mk-recurring-sheet{max-height:88dvh;overscroll-behavior:contain}.mk-recurring-actions{display:flex;gap:6px;margin-top:12px}.mk-recurring-actions>*{flex:1;min-width:0}.mk-recurring-actions .btn{width:auto}
+
+/* Mobile recurring editor: prevent inherited grid widths and flex shrink */
+#mkRecurringModal{inset:0;width:100%;max-width:100vw;align-items:flex-end;justify-content:center;overflow:hidden}
+#mkRecurringModal .mk-recurring-sheet{width:100%;max-width:520px;min-width:0;max-height:calc(100dvh - 24px);overflow-x:hidden;overflow-y:auto;padding:16px;box-sizing:border-box}
+#mkRecurringModal .row{min-width:0;gap:10px;align-items:flex-start}
+#mkRecurringModal .row>strong{flex:1;min-width:0;overflow-wrap:anywhere}
+#mkRecurringModal .row>button{flex:0 0 auto;white-space:nowrap}
+#mkRecurringModal .grid2{grid-template-columns:repeat(2,minmax(0,1fr))}
+#mkRecurringModal .field{min-width:0}
+#mkRecurringModal input,#mkRecurringModal select,#mkRecurringModal textarea{min-width:0;max-width:100%;width:100%}
+#mkRecurringModal .mk-recurring-actions{display:flex;flex-wrap:wrap}
+#mkRecurringModal .mk-recurring-actions>button{min-width:0;white-space:nowrap}
+.mk-bill-items{border-top:1px solid var(--line);margin-top:14px;padding-top:12px}
+.mk-bill-items summary{cursor:pointer;font-weight:800;font-size:14px;list-style-position:inside}
+.mk-bill-expand{float:right;font-size:11px;font-weight:500;color:var(--muted)}
+.mk-bill-items-content{padding-top:9px}
+.mk-bill-withdraw{display:flex;justify-content:flex-end;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}
+.mk-bill-small{width:auto!important;padding:8px 12px;font-size:12px;white-space:nowrap}
+.mk-bill-withdraw button:disabled{opacity:.45;cursor:not-allowed}
+.mk-bill-note{margin-top:10px}
+.mk-bill-preview{background:#fffdfd}
+
+/* Recurring modal is mounted directly under body to avoid inherited page layout. */
+body > #mkRecurringModal {position:fixed!important;inset:0!important;width:100vw!important;max-width:none!important;display:flex!important;justify-content:center!important;align-items:flex-end!important;z-index:110!important;padding:0!important;}
+body > #mkRecurringModal.hidden {display:none!important;}
+body > #mkRecurringModal > .mk-recurring-sheet {flex:0 1 520px!important;width:100%!important;max-width:520px!important;min-width:0!important;max-height:calc(100dvh - 16px)!important;overflow-y:auto!important;overflow-x:hidden!important;margin:0!important;}
+.mk-bill-items summary {display:flex;align-items:center;justify-content:space-between;gap:10px;list-style:none;}
+.mk-bill-items summary::-webkit-details-marker {display:none;}
+.mk-bill-expand::after {content:'▼';font-size:13px;}
+.mk-bill-items[open] .mk-bill-expand::after {content:'▲';}
+
+/* v3: recurring editor uses the same independent bottom-sheet structure as wishlist. */
+body > #mkRecurringModal {position:fixed!important;inset:0!important;display:flex!important;align-items:flex-end!important;justify-content:center!important;width:100%!important;max-width:none!important;padding:0!important;z-index:120!important;background:rgba(0,0,0,.38)!important;}
+body > #mkRecurringModal.hidden {display:none!important;}
+body > #mkRecurringModal > .mk-recurring-sheet {box-sizing:border-box!important;flex:none!important;width:100%!important;max-width:520px!important;min-width:0!important;max-height:calc(100dvh - 20px)!important;margin:0!important;padding:18px 16px calc(20px + env(safe-area-inset-bottom))!important;overflow-y:auto!important;overflow-x:hidden!important;border-radius:22px 22px 0 0!important;background:var(--card)!important;}
+#mkRecurringModal .grid2 {grid-template-columns:repeat(2,minmax(0,1fr));}
+#mkRecurringModal .row > strong {font-size:18px;line-height:1.35;}
+#mkRecurringModal .row > button {background:#f8eef2;color:#493c42;}
+@media(max-width:360px){#mkRecurringModal .grid2{grid-template-columns:1fr;}}
+/* v3: bill details borrow the app's restrained rose/grey visual language. */
+#billModal .sheet {background:var(--card);border:1px solid var(--line);border-bottom:0;}
+#billModal .ghost {background:#f8eef2;color:#493c42;}
+#billModal .outline {border-color:var(--line);}
+#billModal .mk-bill-items {border-top:1px solid var(--line);}
+#billModal .mk-bill-items summary {display:flex;align-items:center;justify-content:flex-start;gap:5px;min-height:44px;color:var(--ink);font-size:14px;cursor:pointer;}
+#billModal .mk-bill-count {font-weight:600;color:var(--muted);}
+#billModal .mk-bill-expand {float:none;display:inline-flex;align-items:center;color:var(--muted);font-size:13px;}
+#billModal .mk-bill-expand::after {content:'▼';}
+#billModal .mk-bill-items[open] .mk-bill-expand::after {content:'▲';}
+
+/* 2026-10-19: 金額入力のフォーカス表示は外側の細い枠だけ。 */
+.money-input.mk-money-input {
+  border: 1px solid #dedfe4 !important;
+  border-radius: 13px;
+  box-shadow: none !important;
+}
+.money-input.mk-money-input:focus-within {
+  border-color: #c77c9b !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+.money-input.mk-money-input > input,
+.money-input.mk-money-input > input:focus {
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Category budget editor: the outer field already supplies the border.
+   Money formatter adds a nested wrapper; keep that wrapper visually neutral. */
+.mk-inline-budget-field .money-input.mk-money-input,
+.mk-inline-budget-field .money-input.mk-money-input:focus-within {
+  flex: 1 1 auto; min-width: 0; width: auto; min-height: 0;
+  border: 0 !important; border-radius: 0 !important;
+  box-shadow: none !important; outline: none !important;
+  background: transparent !important; overflow: visible;
+}
+.mk-inline-budget-field .money-input.mk-money-input .money-prefix { display: none !important; }
+.mk-inline-budget-field .money-input.mk-money-input input,
+.mk-inline-budget-field .money-input.mk-money-input input:focus {
+  width: 100%; min-width: 0; padding: 4px 0 !important;
+  border: 0 !important; box-shadow: none !important; outline: none !important;
+}
+.mk-inline-budget-field:focus-within { border-color: #c77c9b; }
+
+/* #54: category-budget inline editor has ONE border on its outer field.
+   Override the global focus rule and the dynamically inserted money wrapper. */
+.mk-inline-budget-field,
+.mk-inline-budget-field:focus-within {
+  border:1px solid #dfd9de !important;
+  outline:none !important;
+  box-shadow:none !important;
+}
+.mk-inline-budget-field:focus-within {border-color:#c77c9b !important;}
+.mk-inline-budget-field .money-input.mk-money-input,
+.mk-inline-budget-field .money-input.mk-money-input:focus-within {
+  border:0 !important;outline:0 !important;box-shadow:none !important;
+  background:transparent !important;min-height:0 !important;
+  flex:1 1 auto;min-width:0;
+}
+.mk-inline-budget-field .money-input.mk-money-input > input,
+.mk-inline-budget-field .money-input.mk-money-input > input:focus {
+  border:0 !important;outline:0 !important;box-shadow:none !important;
+  background:transparent !important;
+}
+
+/* #55: Keep the limited-payment checkbox compact despite recurring input sizing. */
+#mkRecurringModal .switchline { display:flex; align-items:center; gap:10px; }
+#mkRecurringModal .switchline input[type="checkbox"] {
+  appearance:auto; -webkit-appearance:checkbox;
+  flex:0 0 18px; width:18px!important; min-width:18px; max-width:18px;
+  height:18px; margin:0; padding:0; border-radius:3px; accent-color:#bd7295;
+}
+
+/* Bill confirmation cancellation stays inside the existing reconciliation disclosure. */
+.mk-bill-cancel-confirm{margin-top:12px;padding-top:12px;border-top:1px solid var(--line,#e8e2e5)}
+
+/* Special expense category selection, budget editing and transaction list */
+.mk-event-select-btn{width:100%;margin:8px 0;text-align:left}
+.mk-event-cat-picker{max-height:240px;overflow:auto;border:1px solid var(--line);border-radius:12px;background:#fff;padding:5px 9px;margin-bottom:8px}
+.mk-event-check{display:flex;align-items:center;gap:9px;padding:8px 3px;font-size:13px;border-bottom:1px solid var(--line)}
+.mk-event-check:last-child{border-bottom:0}.mk-event-check input{width:17px;height:17px;flex:none}
+.mk-event-budget-row{display:grid;grid-template-columns:minmax(0,1fr) 112px 57px;gap:6px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
+.mk-event-budget-label{font-size:12px;font-weight:700;min-width:0;overflow-wrap:anywhere}
+.mk-event-budget-row input{min-width:0;padding:9px 7px;font-size:13px;text-align:right}
+.mk-event-budget-row .ghost{padding:9px 3px;font-size:11px;white-space:nowrap}
+.mk-event-remain{text-align:right;font-size:12px;color:var(--muted);margin-top:4px}
+.mk-event-record-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:15px}
+.mk-event-record-toggle{font-size:13px;font-weight:800;text-align:left;background:transparent;padding:8px 0;white-space:nowrap}
+.mk-event-record-filter{width:120px;max-width:45%;min-width:0;padding:7px 5px;font-size:12px;text-overflow:ellipsis;white-space:nowrap}
+
+/* #58 Special expense visual refinements */
+.mk-event-record-filter{width:180px;max-width:55%;flex:0 1 180px}
+.mk-event-record-toggle{flex:0 0 auto}
+.mk-event-category-summary{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.mk-event-category-name{min-width:0;flex:1;font-size:14px;overflow-wrap:anywhere}
+.mk-event-category-spent{flex:none;text-align:right;font-size:17px;font-weight:800;white-space:nowrap}
+.mk-event-category-secondary{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:4px 15px;color:var(--muted);font-size:11px;margin-top:4px}
+.mk-event-select-btn{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.mk-event-select-btn span:last-child{font-size:12px;color:var(--muted)}
+.mk-event-budget-row{grid-template-columns:minmax(0,1fr) 103px 49px;gap:5px}
+.mk-event-budget-label{font-size:12px;overflow-wrap:normal;word-break:normal}
+.mk-event-money-field{display:flex;align-items:center;min-width:0;border:1px solid #dedfe4;border-radius:12px;background:#fff;overflow:hidden}
+.mk-event-money-field:focus-within{border-color:#5965f2}
+.mk-event-yen{padding-left:7px;color:#555;font-size:12px;flex:none}
+.mk-event-budget-row .mk-event-money-field input{border:0;outline:none;padding:9px 5px 9px 2px;min-width:0;width:100%;font-size:12px;text-align:right}
+.mk-event-budget-row .ghost{padding:9px 1px;font-size:10px}
+@media(min-width:420px){.mk-event-budget-row{grid-template-columns:minmax(0,1fr) 115px 52px}}
+
+/* #59: compact special-expense controls */
+.mk-event-budget-row{grid-template-columns:minmax(0,1fr) 95px 43px;gap:5px}
+.mk-event-budget-row .mk-event-money-field input{text-align:left;padding:8px 2px;font-size:12px}
+.mk-event-yen{padding-left:6px}
+.mk-event-budget-row .ghost{font-size:10px;padding:8px 1px}
+@media(min-width:420px){.mk-event-budget-row{grid-template-columns:minmax(0,1fr) 102px 46px}}
+.mk-event-over{color:#c83b50;font-weight:800}
+.mk-event-topline{display:flex;align-items:center;gap:6px}
+.mk-event-topline .event-head{min-width:0;flex:1}
+.mk-event-small-action{font-size:11px!important;padding:6px 9px!important;width:auto!important;white-space:nowrap;min-height:30px}
+.mk-event-bottom-actions{display:flex;justify-content:flex-end;margin-top:9px}
+.mk-event-record-filter{width:180px;max-width:55%;flex:0 1 180px}
+.mk-event-suggestion{margin:8px 0 10px}
+.mk-event-suggest-card{border:1px solid #ebd5df;background:#fffafc;border-radius:13px;padding:9px 11px;margin-bottom:7px}
+.mk-event-suggest-top,.mk-event-suggest-bottom{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:9px;align-items:center}
+.mk-event-suggest-top{font-size:10px;color:#766773;margin-bottom:6px}
+.mk-event-suggest-bottom strong{font-size:14px;min-width:0;overflow-wrap:anywhere;padding-left:5px}
+.mk-event-fixed,.mk-event-switch{border:1px solid #e6cbd7;border-radius:8px;background:white;color:#6e5863;justify-self:stretch;font-size:11px;font-weight:700;padding:5px 7px}
+.mk-event-fixed{justify-self:end;font-size:10px;padding:4px 9px}
+.mk-event-switch{font-size:12px;padding:8px 7px}
+.mk-event-fixed.active,.mk-event-switch.active{background:#e78cab;color:white;border-color:#e78cab}
+
+/* #60: event budget entries — single right-aligned yen/value; no yen for unset. */
+.mk-event-budget-row .mk-event-money-field{justify-content:flex-end;border:1px solid #dedfe4;box-shadow:none!important;outline:none!important}
+.mk-event-budget-row .mk-event-money-field:focus-within{border-color:#c77c9b!important;box-shadow:none!important;outline:none!important}
+.mk-event-budget-row .mk-event-money-field input{width:100%;text-align:right!important;padding:8px 8px!important;border:0!important;border-radius:0!important;outline:none!important;box-shadow:none!important;background:transparent;font-size:12px}
+.mk-event-budget-row .mk-event-money-field input:focus{border:0!important;outline:none!important;box-shadow:none!important}
+.mk-event-budget-row .mk-event-money-field input::placeholder{color:#999;opacity:1}
+/* #60: total remainder is directly beneath progress meter, aligned right. */
+.mk-event-total-remaining{text-align:right;font-size:13px;color:#7b7074;margin-top:7px;white-space:nowrap}
+.mk-event-total-over{color:#c83b50;font-weight:800}
+/* #60: quiet compact edit action, same weight as other edit buttons. */
+.mk-event-topline .mk-event-small-action{font-weight:400!important}
+
+/* #61: event-name-only toggle, right aligned at ~70% width */
+.mk-event-name-row{display:flex;justify-content:flex-end;min-width:0}
+.mk-event-name-toggle{display:flex;align-items:center;gap:10px;width:72%;min-width:0;padding:9px 10px;border:1px solid #ded9dd;border-radius:10px;background:#fff;color:#292529;text-align:left}
+.mk-event-name-toggle.active{border-color:#d66c98;background:#fff}
+.mk-event-state{flex:none;display:inline-flex;align-items:center;justify-content:center;min-width:37px;padding:4px 8px;border-radius:999px;background:#e9e6e8;color:#6f686c;font-size:11px;font-weight:700}
+.mk-event-name-toggle.active .mk-event-state{background:#c76f94;color:#fff}
+.mk-event-name-text{font-size:13px;font-weight:700;min-width:0;overflow-wrap:anywhere}
+/* #61: inactive payment labels lighter weight, keep original selected palette */
+#payBtns .mini:not(.active),#otherPays .mini:not(.active){font-weight:400}
+#payBtns .mini.active,#otherPays .mini.active{font-weight:700}
+/* #61: compact record reset, kept away from main transaction tabs */
+#record .interaction-row{position:relative}
+#record .mk-record-reset{margin-left:auto;flex:none;width:37px;height:37px;display:grid;place-items:center;border:1px solid #e5d5dd;border-radius:11px;background:#fff;color:#8d6d7b;font-size:24px;font-weight:400;line-height:1}
+#record .interaction-row:has(.interaction-tabs:not(.hidden)) .mk-record-reset{order:5}
+
+/* #68: category overlay only; #61 mode/reset layout remains unchanged */
+#payBtns .mini.active,#otherPays .mini.active{border-width:1.6px}
+/* Category dropdown; no automatic page scrolling */
+
+#mkCategoryDropdown{position:fixed;z-index:85;overflow-y:auto;overscroll-behavior:contain;background:#fffdfd;border:1px solid #e4b7c9;border-radius:0 0 13px 13px;box-shadow:0 9px 22px rgba(60,30,45,.15);padding:4px 8px;scrollbar-width:thin}
+#mkCategoryDropdown .mk-category-item{display:block;width:100%;text-align:left;font-size:14px;font-weight:400;line-height:1.35;padding:8px 10px;background:transparent;border:0;border-bottom:1px solid #f0e9ed;border-radius:5px;color:#2c292a}
+#mkCategoryDropdown .mk-category-item:last-child{border-bottom:0}
+#mkCategoryDropdown .mk-category-item.is-selected{background:#fbeaf1;color:#9e5072}
+#mkCategoryDropdown .mk-category-item:active{background:#f8e2eb}
+#categoryBtn[aria-expanded="true"]{border-color:#d884a5;border-bottom-left-radius:5px;border-bottom-right-radius:5px}
+
+/* #70: touch dragging is bounded only while the record category list is open. */
+#categoryBtn[aria-expanded="true"]{touch-action:none}
+
+/* #76: memo-only event card, same toggle height and right alignment. */
+.mk-event-memo-card .mk-event-suggest-top{grid-template-columns:minmax(0,1fr)}
+.mk-event-memo-note{font-size:11px;color:#766773;line-height:1.45;margin-bottom:6px}
+.mk-event-name-toggle.mk-event-memo-toggle{width:max-content;min-width:72%;max-width:100%;flex-shrink:1;box-sizing:border-box}
+.mk-event-memo-toggle .mk-event-name-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal}
+
+/* #77: memo picker plus the same mini-button style as discount choices. */
+.mk-event-memo-picker-row{display:flex;align-items:center;gap:8px;min-width:0}
+.mk-event-memo-picker-row .picker{flex:1;min-width:0;width:auto}
+.mk-event-memo-picker-row .picker span:first-child{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mk-event-memo-picker-row .picker span:last-child{flex:none}
+.mk-event-memo-picker-row .mini{flex:none;white-space:nowrap}
+.mk-event-memo-picker-row .mini:disabled{opacity:.45;cursor:default}
+
+/* #78: compact ON/OFF memo switch, matching the period card. */
+#mkEventMemoAdd{display:inline-flex;align-items:center;justify-content:center;gap:4px;width:72px;height:37px;padding:0 5px;background:#fff;border:1px solid #ded9dd;color:#292529;font-size:12px}
+#mkEventMemoAdd.active{background:#fff;border-color:#d66c98}
+#mkEventMemoAdd .mk-event-state{min-width:0;width:29px;padding:3px 0;font-size:9px;box-sizing:border-box}
+#mkEventMemoAdd.active .mk-event-state{background:#c76f94;color:#fff}
+
+/* #79 compact memo management */
+#mkMemoTabs{margin-top:12px}#mkMemoTabs[hidden],#mkMemoModal [hidden],#memoManager [hidden]{display:none!important}.mk-memo-list-head{margin:14px 0 6px}.mk-memo-row{display:flex;gap:6px;align-items:center;min-height:48px;padding:7px 0;border-bottom:1px solid var(--line);background:var(--card)}.mk-memo-row:last-child{border-bottom:0}.mk-memo-grip{flex:none;width:24px;min-height:34px;background:transparent;color:#9a9194;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;font-size:23px;padding:0}.mk-memo-name{flex:1;min-width:0;background:none;text-align:left;padding:4px 0;font-size:14px;overflow-wrap:anywhere}.mk-memo-name .small{font-size:10px;margin-top:2px}.mk-memo-row .history-actions{align-self:center}.mk-memo-row .ghost{white-space:nowrap}.mk-memo-empty{padding:16px 0}#mkMemoHint{margin-top:10px;font-size:11px}.mk-memo-floating{position:fixed;z-index:250;pointer-events:none;box-shadow:0 5px 18px #7b52643d;border:1px solid #d4a8ba;border-radius:10px;opacity:.97;transform:scale(1.02)}.mk-memo-placeholder{opacity:.22}.mk-memo-group-select{display:flex;gap:6px;margin-top:6px}.mk-memo-group-select select,.mk-memo-group-select input{flex:1;min-width:0}.mk-memo-group-select button{flex:none;white-space:nowrap;padding:7px 10px}#mkMemoCategories{display:flex;flex-wrap:wrap;gap:6px;padding:10px 0}.mk-memo-cat{display:flex;align-items:center;gap:5px;font-size:12px;border:1px solid var(--line);border-radius:10px;padding:7px;background:#fff}.mk-memo-cat:has(input:checked){background:var(--soft);border-color:var(--accent)}.mk-memo-cat input{width:auto;margin:0;accent-color:var(--accent)}#mkMemoModal summary{font-size:13px;padding:8px 0;cursor:pointer}#mkMemoFeedback{margin:10px 0;color:#9b4965}#mkMemoDuplicateActions button{margin:3px 0;width:100%;font-size:12px}.mk-memo-form-actions{display:flex;gap:8px;margin-top:10px}.mk-memo-form-actions .btn{flex:1;width:auto}.mk-memo-form-actions .outline{font-size:13px}.mk-memo-modal-open{overflow:hidden}#mkMemoModal .sheet{max-height:85dvh;overscroll-behavior:contain}#mkMemoModal .sheet-title{margin:0}#mkMemoModal .field{margin-top:12px}
+
+/* #80 Memo list, navigation, and keyboard-aware editor */
+#mkMemoTabs button{font-weight:400!important}#mkMemoTabs{flex-wrap:nowrap}#mkMemoTabs .mini{padding:8px 10px;white-space:nowrap;font-size:13px}
+.mk-memo-name{display:flex;align-items:center;gap:7px;white-space:nowrap;overflow:hidden}.mk-memo-word{min-width:0;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto}.mk-memo-meta{min-width:0;max-width:40%;flex:0 1 auto;font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}.mk-memo-arrow{margin-left:auto;flex:none}
+#mkMemoModal{bottom:auto;align-items:flex-end;padding:8px 0;box-sizing:border-box}#mkMemoModal .sheet{max-height:100%;display:flex;flex-direction:column;overflow:hidden}#mkMemoModal .sheet>.row{flex:none}.mk-memo-scroll{overflow:auto;overscroll-behavior:contain;min-height:0}.mk-memo-form-actions{flex:none;background:white;padding-top:8px;margin-top:0}.mk-memo-text-row{display:flex;align-items:center;gap:8px}.mk-memo-text-row input{min-width:0;flex:1}.mk-memo-inline-save{display:none}.mk-memo-group-form .mk-memo-inline-save{display:block;width:auto;flex:none;padding:12px 16px}.mk-memo-group-form .mk-memo-form-actions{display:none}
+#mkMemoModal summary{display:flex;align-items:center;justify-content:space-between;gap:8px;list-style:none;background:#fcf3f7;border:1px solid #ead9e0;border-radius:10px;padding:10px;font-size:12px}#mkMemoModal summary::-webkit-details-marker{display:none}#mkMemoModal summary::after{content:'＋';flex:none}#mkMemoModal details[open]>summary::after{content:'−'}
+
+/* #81 Grouped vocabulary overview and independently scrolling category tags. */
+.mk-memo-section-title{display:flex;align-items:center;gap:10px;color:#ad708b;font-size:12px;margin:15px 0 2px;font-weight:500}
+.mk-memo-section-title::after{content:'';height:1px;background:#d5b3c2;flex:1}
+.mk-memo-word-row .history-actions{flex:none}
+.mk-memo-word-row .mk-memo-word{flex:0 1 auto;max-width:100%}
+.mk-memo-word-row .mk-memo-name:has(.mk-memo-strip) .mk-memo-word{max-width:55%}
+.mk-memo-strip{display:flex;gap:4px;min-width:0;overflow-x:auto;overflow-y:hidden;white-space:nowrap;scrollbar-width:none;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;padding:2px 0}
+.mk-memo-strip::-webkit-scrollbar{display:none}
+.mk-memo-strip.has-more{mask-image:linear-gradient(to right,#000 calc(100% - 12px),transparent)}
+.mk-memo-strip.has-before{mask-image:linear-gradient(to right,transparent,#000 10px)}
+.mk-memo-strip.has-before.has-more{mask-image:linear-gradient(to right,transparent,#000 10px,#000 calc(100% - 12px),transparent)}
+.mk-memo-category-strip{flex:1 1 0}
+.mk-memo-tag{flex:none;font-size:10px;color:var(--muted);background:#f1f1f3;border-radius:999px;padding:2px 6px;line-height:1.5}
+.mk-memo-category-row{display:block;padding:8px 0}
+.mk-memo-category-row .mk-memo-name{width:100%;min-height:30px}
+.mk-memo-preview{width:100%;margin-top:1px}
+.mk-memo-preview .mk-memo-tag{background:transparent;padding:0;font-size:11px}
+.mk-memo-preview .mk-memo-tag+.mk-memo-tag::before{content:'・';margin-right:4px;color:#b3aeb0}
+.mk-memo-preview-empty{display:block;color:var(--muted);font-size:11px;padding:2px 0}
+
+/* #83 Inline, compact memo candidates. Only the vocabulary panel scrolls. */
+.mk-candidate-toggle{display:block;width:100%;padding:7px 2px;margin-top:3px;background:transparent;color:var(--muted);font-size:12px;font-weight:400;text-align:left}
+.mk-candidate-panel{border:1px solid var(--line);border-radius:12px;padding:7px;background:#fffafc;overflow:hidden}
+.mk-candidate-panel[hidden]{display:none!important}
+#mkCandidateTabs{display:flex;gap:5px;overflow-x:auto;white-space:nowrap;padding-bottom:6px;scrollbar-width:none;overscroll-behavior-x:contain}
+#mkCandidateTabs::-webkit-scrollbar{display:none}
+.mk-candidate-tab{flex:none;padding:6px 9px;min-height:30px;font-size:12px;font-weight:400;background:#f7f2f5;border:1px solid var(--line);border-radius:9px;color:var(--text)}
+.mk-candidate-tab[aria-selected="true"]{background:var(--soft);border-color:#d8afc1;color:#9f5777}
+#mkCandidateWords{height:156px;overflow-y:auto;overflow-x:hidden;display:flex;flex-wrap:wrap;gap:5px;align-content:flex-start;padding:3px 1px;touch-action:pan-y;overscroll-behavior-y:contain;user-select:none;-webkit-user-select:none}
+.mk-candidate-word{max-width:100%;flex:none;min-height:32px;padding:6px 9px;font-size:12px;font-weight:400;line-height:1.4;border:1px solid var(--line);border-radius:9px;background:white;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;touch-action:pan-y}
+.mk-candidate-word[aria-pressed="true"]{background:var(--soft);border-color:var(--accent);color:#9f5777}
+.mk-candidate-empty{font-size:11px;color:var(--muted);padding:8px 3px}
+
+/* #84 Memo picker controls and right-side reorder handles */
+.mk-candidate-controls{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.mk-candidate-controls .mk-candidate-toggle{width:auto;flex:none}
+#mkCandidateToggle{margin-left:auto;text-align:right}
+#mkCandidateManage[hidden]{display:none}
+
+/* #85 Memo input helpers */
+#mkCandidateManage{margin-left:1em}
+.mk-memo-input-heading{display:flex;align-items:center;justify-content:space-between}
+#mkMemoClear{font-size:12px;font-weight:400;color:var(--muted);background:transparent;padding:3px 2px}
+#mkMemoClear:disabled{opacity:.4}
+
+/* #91: normal screens stay unavailable until saved settings pass validation. */
+#mkSetupGate{display:none;max-width:760px;margin:0 auto;padding:18px 14px}
+.mk-settings-pending #mkSetupGate{display:block}
+.mk-settings-pending .app,.mk-settings-pending .bottom{display:none!important}
+#mkSetupMessage{font-size:14px;line-height:1.7}
+/* #92 Saved account/payment display preferences. */
+.mk-settings-heading{display:flex;align-items:center;gap:5px}.mk-settings-gear{background:transparent;color:#85747c;padding:6px;display:flex;align-items:center;justify-content:center;min-width:34px;min-height:34px}
+#mkSettingsModal{z-index:160}#mkSettingsModal [hidden]{display:none!important}.mk-settings-sheet{width:min(100%,760px);max-height:90dvh;overflow:auto;overscroll-behavior:contain}.mk-settings-sheet h2{font-size:18px;margin:0}.mk-settings-sheet h3{font-size:15px;margin:18px 0 10px}.mk-settings-menu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:18px 0}.mk-settings-menu button{min-height:92px;padding:12px 5px;background:var(--soft);border:1px solid var(--line);border-radius:15px;font-size:14px;color:var(--text)}.mk-settings-menu small{display:block;font-size:11px;color:#85747c;margin-top:6px}.mk-settings-row{display:flex;align-items:center;gap:7px;padding:10px 0;border-bottom:1px solid var(--line);background:var(--card);min-height:52px}.mk-settings-row>span{flex:1;min-width:0;overflow-wrap:anywhere}.mk-settings-row .ghost{flex:none;padding:6px 9px;font-size:12px}.mk-settings-grip{flex:none;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;background:transparent;color:#9a9194;padding:4px;width:28px;min-height:36px;font-size:23px}.mk-settings-dragging{opacity:.4}.mk-settings-footer{position:sticky;bottom:-16px;background:var(--card);padding:12px 0 4px;margin-top:12px}.mk-settings-footer .btn{width:100%}#mkSettingsError{color:#a34260;font-size:13px}.mk-settings-preview{border:1px solid var(--line);padding:10px;border-radius:14px;margin:12px 0}.mk-settings-preview-row{display:flex;gap:5px;margin:5px 0}.mk-settings-preview-row span{flex:1;min-width:0;overflow-wrap:anywhere;text-align:center;padding:10px 2px;border:1px solid var(--line);border-radius:10px;background:var(--soft);font-size:12px}.mk-settings-layout-row{display:flex;align-items:center;gap:8px;margin:10px 0}.mk-settings-layout-row select{width:80px}.mk-settings-check{display:flex;align-items:center;gap:8px;margin:16px 0;font-size:14px}.mk-settings-check input{width:18px;height:18px}.mk-settings-layout-item select{width:auto;max-width:115px;font-size:12px;padding:5px}.mk-settings-sheet details{margin-top:16px}.mk-settings-sheet summary{font-size:13px;color:#85747c}.mk-settings-sheet input[type=text]{width:100%;box-sizing:border-box}.mk-settings-sheet .small{line-height:1.65}.mk-settings-sheet .mk-settings-back{margin:12px 0;background:transparent;color:#85747c;padding:5px 0}
+/* #93 Compact settings navigation and account setup. */
+#mkSettingsModal .mk-settings-footer[hidden]{display:none!important}
+.mk-settings-add-head{display:flex;justify-content:flex-end;margin:8px 0 4px}
+.mk-settings-add-head .outline{padding:8px 13px;font-size:14px}
+.mk-settings-note{margin:0 0 10px!important;font-size:11px!important;line-height:1.45!important}
+.mk-settings-check{margin:12px 0 4px}.mk-settings-form-field{display:block;margin:14px 0;font-size:13px}
+.mk-settings-form-field input,.mk-settings-form-field select{display:block;margin-top:5px;width:100%;box-sizing:border-box;font-size:15px}
+.mk-settings-sheet h3{margin-top:12px}.mk-settings-sheet .mk-settings-menu{margin-bottom:0}
+
+/* #94: one common settings menu; recording controls retain their order. */
+#record #modes{flex-wrap:nowrap;align-items:center}
+#mkRecordSettings{margin-left:auto;flex:0 0 32px;width:32px;height:36px;padding:4px}
+.mk-layout-tabs{display:flex;gap:6px;margin:12px 0}.mk-layout-tabs button{flex:1;min-width:0}
+.mk-card-editor-actions{display:flex;gap:8px;margin-top:16px}
+@media(max-width:370px){#record #modes{gap:4px}#record #modes>.mode-choice{padding-left:8px;padding-right:8px}}
+
+/* #95 category breakdowns */
+.mk-split-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 34px;gap:7px;align-items:start;margin-top:9px}
+.mk-split-row select,.mk-split-row input{width:100%;min-width:0;font-size:14px;padding:10px 8px;box-sizing:border-box}
+.mk-split-money{min-width:0}.mk-split-money .small{display:block;font-size:11px;margin-top:3px;line-height:1.5}
+.mk-split-row button{padding:9px 0;min-width:0}.mk-split-add{margin-top:8px}.mk-split-error{color:#ac414e}
+/* #96: compact category action and group accounting controls. */
+.mk-category-heading{display:flex!important;align-items:center;gap:10px;flex-wrap:wrap}
+.mk-category-heading .mk-split-add{width:auto;margin:0;padding:4px 9px;min-height:30px;border:1px solid #d9d1d6;border-radius:8px;background:#fff;color:#7b7277;font-size:12px;font-weight:400;line-height:1.3}
+#mkGroupSwitchRow{display:flex;justify-content:flex-end;margin:-2px 0 8px;min-height:30px}
+#mkGroupSwitchRow.hidden{display:none}
+.mk-group-switch{background:white;border:1px solid #ddd5da;color:#81767c;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:400;min-height:30px}
+#record:has(#loanGroups:not(.hidden)) #mkGroupSwitchRow{float:right;margin-top:0;position:relative;z-index:1}
+#record .interaction-row:has(#mkGroupTabs:not(.hidden)) .mk-record-reset{order:5}
+#record .interaction-row:has(#mkGroupTabs:not(.hidden)) #mkGroupModeBtn{order:0}
+.mk-group-person-row{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr) 30px;gap:6px;align-items:end;margin:8px 0}
+.mk-group-person-row label{font-size:11px;color:#777;min-width:0}
+.mk-group-person-row input{width:100%;min-width:0;font-size:13px;padding:8px 4px}
+.mk-group-person-row button{padding:6px;min-height:34px}
+.mk-group-participants{margin-bottom:12px}
+.mk-group-participants summary{font-size:13px;color:#81767c;cursor:pointer}
+.mk-group-card-head{display:block;width:100%;background:none;border:0;text-align:left;padding:0;font-size:16px;color:#765968;overflow-wrap:anywhere}
+#mkGroupLoanTabs{margin:12px 0}
+#mkGroupForm .field label{font-size:12px}
+
+/* #98: compact group entry and loan-history alignment. */
+#mkGroupSwitchRow{align-items:center;gap:8px}
+#mkGroupSwitchRow .mk-group-switch{margin-left:auto;flex:none;white-space:nowrap}
+#mkGroupTabs{flex:0 1 auto;flex-wrap:nowrap;min-width:0;margin:0}
+#mkGroupTabs .mini{flex:none;white-space:nowrap}
+#recordTopGrid:has(#mkGroupNameField:not(.hidden)){grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+#mkGroupNameField{min-width:0}
+.mk-group-money-note{margin:0 0 12px;font-size:11px}
+.mk-category-heading .mk-split-add{padding:3px 7px;min-height:24px;border:0;background:#f3f2f3;border-radius:7px;font-size:11px;font-weight:400}
+.mk-group-person-row .money-input.mk-money-input .money-prefix{font-size:12px;padding-left:5px}
+.mk-group-person-row .money-input.mk-money-input input{font-size:13px!important;padding-left:3px!important}
+.mk-group-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.mk-payment-group-name{display:block;font-size:16px;color:var(--text,#292929)}
+.mk-payment-group-balance{display:block;font-size:15px;font-weight:700;margin-top:4px}
+.mk-payment-group-actions{gap:6px;margin:0 0 12px;flex-wrap:wrap}
+.mk-payment-group-actions .mk-loan-todo-btn{max-width:none;font-size:11px;font-weight:400;padding:5px 7px;background:#fbedf2;color:#a45272;border:1px solid #e7b9c9;border-radius:9px}
+.mk-payment-group-card .loan-record-actions{margin-left:auto}
+.mk-payment-group-card .loan-record-actions button{font-weight:400}
+.mk-payment-group-card .loan-record-amt{color:#b86686}
+@media(max-width:360px){#mkGroupSwitchRow{gap:5px}#mkGroupTabs{gap:4px}#mkGroupTabs .mini{padding:6px 7px}#mkGroupSwitchRow .mk-group-switch{padding:5px 7px;font-size:11px}}
+
+/* #99: compact recording navigation and direct member entry */
+.mk-record-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.mk-record-heading .mid{margin:0}
+#record #modes{display:flex;flex-wrap:nowrap;gap:6px;align-items:center}
+#record #modes .mode-choice{padding:10px 11px;white-space:nowrap;flex:0 0 auto}
+#record .interaction-row{gap:6px;flex-wrap:nowrap}
+#record #interactionModeBtn{padding:10px 11px;white-space:nowrap;flex:none}
+#record #loanSections{display:flex;gap:5px;flex:0 1 auto;min-width:0}
+#record #loanSections.hidden{display:none}
+#record #loanSections .mini{flex:0 0 auto;min-width:0;padding:7px 7px;font-size:11px;white-space:nowrap}
+#record #recordResetBtn{flex:none;margin-left:auto}
+#record #mkGroupSwitchRow{margin-top:8px}
+.mk-group-money-note{display:inline;font-size:10px;font-weight:400;color:#827981;margin-left:5px}
+.mk-member-heading{display:flex;align-items:center;gap:10px;margin:8px 0;color:#555;font-size:13px}
+.mk-member-add{padding:3px 7px;min-height:24px;border:0;background:#f3f2f3;border-radius:7px;font-size:11px;font-weight:400;color:#827981;white-space:nowrap}
+.mk-group-participants{margin-bottom:14px}
+button.loan-record-meta.mk-meta-toggle{display:block;flex:1;text-align:left;border:0;border-radius:0;background:transparent;padding:3px 0;font:inherit;font-size:11px;color:var(--muted,#827981);min-width:0;font-weight:400;cursor:pointer}
+button.loan-record-meta.mk-meta-toggle.expanded{white-space:normal;overflow-wrap:anywhere;text-overflow:clip}
+#record #mkGroupSwitchRow{justify-content:flex-start}
+/* #100: existing heading rows host member actions without an extra toolbar. */
+.mk-group-label-row{display:flex;align-items:center;gap:5px;margin-bottom:5px;white-space:nowrap}
+.field .mk-group-label-row label{margin:0;flex:none}
+.mk-group-label-row .mk-member-add{font-size:9px;padding:3px 4px;min-height:22px}
+.mk-member-heading{gap:5px;flex-wrap:nowrap;font-size:12px}
+.mk-member-heading strong{white-space:nowrap}
+.mk-member-heading .mk-member-add{font-size:10px;padding:4px 5px;flex:none}
+.mk-group-calc-hint:empty{display:none}
+.mk-group-calc-hint{color:var(--bad);margin-top:5px}
+#mkMemberModal{z-index:150}
+#mkMemberModal .sheet{max-height:85dvh;overscroll-behavior:contain}
+#mkMemberModal .sheet-title{margin:0}
+.mk-member-draft-row{display:flex;gap:8px;margin:10px 0}
+.mk-member-draft-row input{min-width:0;flex:1}
+#mkMemberSave{margin-top:15px}
+#mkMemberError{margin-top:10px}
+.mk-group-header{position:relative}
+.mk-group-header:has(.mk-group-member-setting) .mk-payment-group-name{max-width:calc(100% - 105px);display:inline-block}
+.mk-group-member-setting{position:absolute;top:0;right:30px}
+.mk-event-cats-toggle{display:block;background:none;border:0;color:inherit;text-align:left;padding:8px 0;cursor:pointer}
+button.history-item-meta.mk-history-toggle{width:100%;text-align:left;border:0;background:none;padding:0;color:var(--muted);font-weight:400;cursor:pointer}
+button.history-item-meta.mk-history-toggle.expanded{display:block;-webkit-line-clamp:unset;white-space:normal;overflow:visible;overflow-wrap:anywhere}
+@media(max-width:360px){.mk-member-heading{gap:4px;font-size:11px}.mk-member-heading .mk-member-add{font-size:9px;padding:4px}.mk-group-label-row{gap:3px}}
+
+/* Keep member settings directly beside the group name, outside its toggle. */
+.mk-group-header{display:flex;align-items:center;flex-wrap:wrap;gap:5px 8px;padding-right:25px}
+.mk-group-header .mk-group-card-head{width:auto;max-width:100%;padding:0;flex:0 1 auto}
+.mk-group-header:has(.mk-group-member-setting) .mk-payment-group-name{max-width:none;display:block;overflow-wrap:anywhere}
+.mk-group-header .loan-card-arrow{position:absolute;right:0;top:8px}
+.mk-group-member-setting{position:static;flex:none}
+.mk-group-header>.mk-payment-group-balance{width:100%;margin:0}
+
+.mk-group-header>.mk-payment-group-balance{color:#785c6c;margin-bottom:8px}
+
+/* #101: larger heading targets; the filter remains a separate control. */
+.mk-event-cats-toggle{width:100%;min-height:44px;text-align:left;cursor:pointer}
+.mk-event-record-toggle{flex:1;align-self:stretch;min-height:44px;text-align:left;cursor:pointer}
+.mk-event-record-head{align-items:stretch}
+#mkSecurityGate{position:fixed;inset:0;z-index:100002;background:#fff8fb;overflow:auto;padding:24px 16px;display:flex;align-items:flex-start;justify-content:center}
+#mkSecurityGate[hidden],#mkPrivacyShield[hidden],#mkSaveBar[hidden]{display:none}
+.mk-security-form{width:100%;max-width:440px;margin:8vh 0 24px;padding:24px;box-sizing:border-box}
+.mk-security-form h2{font-size:23px;margin:0 0 16px}
+.mk-security-form label{display:block;margin:16px 0;font-weight:600}
+.mk-security-form input{width:100%;box-sizing:border-box;margin-top:8px;font-size:16px}
+.mk-security-form button{width:100%;min-height:44px;margin-top:10px}
+#mkPrivacyShield{position:fixed;inset:0;z-index:100001;background:#fff8fb;display:grid;place-items:center;color:#79636f}
+.mk-secure-covered body>*:not(#mkSecurityGate):not(#mkPrivacyShield):not(script){visibility:hidden!important}
+#mkSaveBar{position:fixed;top:0;left:0;right:0;z-index:99999;background:#fff4e9;color:#743c25;padding:10px 16px;font-size:14px;box-shadow:0 2px 8px #0001}
+#mkSaveBar button{margin-left:8px}
+.mk-security-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.mk-security-actions button{font-weight:400}
+
+/* #102: consistent charge typography, split money fields and group input alignment. */
+#chargeTargets .mini,#chargeSources .mini{font-weight:400}
+.mk-split-money .money-input{width:100%;min-width:0}
+#recordTopGrid:has(#mkGroupNameField:not(.hidden))>.field:first-child>label,
+#recordTopGrid:has(#mkGroupNameField:not(.hidden)) .mk-group-label-row{min-height:24px;margin-bottom:5px;display:flex;align-items:center}
+#recordTopGrid:has(#mkGroupNameField:not(.hidden)){align-items:start}
+#recordTopGrid:has(#mkGroupNameField:not(.hidden)) #date,
+#recordTopGrid:has(#mkGroupNameField:not(.hidden)) #mkGroupName{height:46px;box-sizing:border-box}
+
+/* #104 Opening setup: existing form styling, generous tap targets. */
+.mk-initial-open{overflow:hidden}
+#mkInitialModal{z-index:1400}
+#mkInitialModal .mk-initial-sheet{max-width:520px;width:100%;max-height:92dvh;overflow:auto;padding:20px 18px 28px}
+#mkInitialTitle{font-size:20px;margin:0 0 12px;min-width:0}
+#mkInitialBody h3{font-size:15px;margin:24px 0 10px}
+#mkInitialBody>button{display:block;width:100%;margin:12px 0;min-height:44px}
+#mkInitialBody p{line-height:1.6;overflow-wrap:anywhere}
+#mkInitialBody .field{min-width:0}
+#mkInitialBody input:not([type=checkbox]),#mkInitialBody select{width:100%;min-width:0}
+.mk-initial-check{display:flex;align-items:center;gap:10px;min-height:48px;font-size:14px}
+.mk-initial-check input{width:20px;height:20px;flex:none}
+.mk-opening-row{border:1px solid var(--line);border-radius:15px;padding:12px;margin-bottom:12px}
+.mk-opening-row>.ghost{display:block;margin-left:auto;font-weight:400}
+#mkInitialBody .row.item span{overflow-wrap:anywhere;min-width:0}
+#mkInitialBody .row.item strong{white-space:nowrap}
