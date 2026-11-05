@@ -1,4 +1,4 @@
-/* Money Keeper production 1.0. Encrypted backup and restore.
+/* Money Keeper production 1.1. Encrypted backup and restore.
    Add <script src="backup.js"></script> AFTER app.js in index.html. */
 (() => {
   'use strict';

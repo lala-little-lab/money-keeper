@@ -968,3 +968,7 @@ button.history-item-meta.mk-history-toggle.expanded{display:block;-webkit-line-c
 .mk-opening-row>.ghost{display:block;margin-left:auto;font-weight:400}
 #mkInitialBody .row.item span{overflow-wrap:anywhere;min-width:0}
 #mkInitialBody .row.item strong{white-space:nowrap}
+
+/* #108: compact total only while filtering; paired discounts retained */
+.mk-history-total{margin:10px 0 4px;font-size:13px;line-height:1.5;color:var(--muted,#777);overflow-wrap:anywhere}
+.mk-discount-pair{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
