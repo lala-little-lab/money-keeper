@@ -843,7 +843,7 @@ function mkApplySettings(c){
  pays=mkSettings.pays;incomePays=mkSettings.incomePays;
  balances=Object.fromEntries(mkSettings.accounts.map(x=>[x.id,{name:x.name,v:balances[x.id]?.v||0}]));
  cardDefs=Object.fromEntries(mkSettings.cards.map(x=>[x.id,{...x,account:balances[x.accountId].name}]));
- $('recFinalSource').innerHTML=selectOptions(mkSettings.recurringSources,'');
+ $('recFinalSource').innerHTML=selectOptions([['','選んでください'],...mkSettings.pays.filter(x=>x[0]!=='rakutenpay')],'');
  const ids=['mkRakPayCard','mkRakPayBank','mkRakPayCash'];
  const row=$('mkRakPaySource').querySelector('.choice-row');row.replaceChildren();
  mkSettings.rakutenSources.forEach(([k,name],i)=>{const b=document.createElement('button');b.type='button';b.className='mini';b.id=ids[i]||'mkRakPaySource'+i;b.dataset.source=k;b.hidden=mkHiddenPay(k);b.textContent=name;b.onclick=()=>mkChooseRakPaySource(k);row.appendChild(b)});
@@ -868,7 +868,7 @@ function billUnconfirmedStatus(card,due){let c=mkCardRule(card,due),[y,m]=due.sp
 function statusText(s){return s==='confirmed'?'確定':s==='candidate'?'確定候補':'予定'}
 function allocRecorded(card){let out=[];txs.forEach((t,idx)=>{if(t.type==='expense'){let c=finalCardForPayment(t.payment,t.rakutenPaySource);if(c!==card)return;let baseDue=t.billOverride||dueForPurchase(card,t.date),n=Math.max(1,Number(t.installments||1)),total=Number(t.billed??t.paid??(Number(t.amount||0)-mkDiscountTotal(t))),base=Math.floor(total/n),rem=total-base*n;for(let i=0;i<n;i++){let due=i?nextMonthlyDue(card,baseDue):baseDue;for(let j=1;j<i;j++)due=nextMonthlyDue(card,due);out.push({kind:'tx',idx,date:t.date,label:(t.memo||t.category)+(n>1?`（${i+1}/${n}回）`:''),amount:base+(i<rem?1:0),due})}}else if(t.type==='lend'){let c=finalCardForPayment(t.payment,t.rakutenPaySource);if(c!==card)return;let baseDue=t.billOverride||dueForPurchase(card,t.date),n=Math.max(1,Number(t.installments||1)),total=Number(t.billed??t.gross??0),base=Math.floor(total/n),rem=total-base*n;for(let i=0;i<n;i++){let due=baseDue;for(let j=0;j<i;j++)due=nextMonthlyDue(card,due);out.push({kind:'tx',idx,date:t.date,label:(t.memo||t.category||'立替')+(t.paymentGroupId?'（グループ・'+t.groupName+'）':'（立替・'+(t.person||'相手')+'）')+(n>1?`（${i+1}/${n}回）`:''),amount:base+(i<rem?1:0),due})}}else if(t.type==='charge'){let c=finalCardForPayment(t.source);if(c!==card)return;let due=t.billOverride||dueForPurchase(card,t.date);out.push({kind:'charge',idx,date:t.date,label:(balances[t.target]?.name||t.target)+'チャージ',amount:Number(t.billed??t.amount??0),due})}});return out}
 function timingDay(r){let m=String(r.timing).match(/(^|[^0-9])(\d{1,2})日/);return m?Number(m[2]):null}
-function recurringForDue(card,due){let c=mkCardRule(card,due),[y,m]=due.split('-').map(Number),[py,pm]=addMonthsYM(y,m,-1),items=[];recurring.forEach((r,i)=>{if(r.paused||r.target!==card)return;if(r.timing.includes('ヶ月')){let nx=(r.timing.match(/次回(\d{1,2})\/(\d{1,2})/)||[]);if(!nx.length)return;let d=dateISO(y,Number(nx[1]),Number(nx[2]));if(dueForPurchase(card,d)!==due)return;items.push({kind:'rec',idx:i,date:d,label:r.name,amount:r.amount,due});return}let day=timingDay(r);if(!day)return;let days=new Date(py,pm,0).getDate(),d=dateISO(py,pm,Math.min(day,days));if(dueForPurchase(card,d)===due)items.push({kind:'rec',idx:i,date:d,label:r.name,amount:r.amount,due})});return items}
+function recurringForDue(card,due){return []} // Recurring expenses enter bills only through recorded transactions.
 function billItemKey(x,due){return x.kind+'|'+x.idx+'|'+due}
 function itemsForBill(card,due){return [...(mkOpening?.cards||[]).filter(x=>x.card===card&&x.due===due).map(x=>({kind:'opening',idx:x.id,date:mkOpening.startDate,label:'開始前の未払い',amount:x.amount,due})),...allocRecorded(card).filter(x=>x.due===due),...recurringForDue(card,due)].map(x=>{let a=billItemAdjustments[billItemKey(x,due)];return a!=null?{...x,originalAmount:x.amount,amount:a}:x})}
 function predictedAmount(card,due){return itemsForBill(card,due).reduce((s,x)=>s+x.amount,0)}
@@ -944,19 +944,19 @@ function renderDue(){
  $('prep').innerHTML='<div class="small">給与サイクルに合わせた準備額の自動計算は未対応です。下のカード請求で引落日・金額・口座を確認してください。</div>';
  $('cards').innerHTML=mkSettings.cards.map(c=>c.id).map(cardRow).join('');
 }
-function recurringMeta(r){let cat=r.category?`<span class="cat-mini">${r.category}</span>`:`<span class="cat-mini">支出集計対象外</span>`;if(r.name==='Pairs'||r.name==='Google One')return `${recCycleText(r)}<br>${r.route||''}${cat}`;return `${recCycleText(r)}　${r.route||''}${r.finalSource?' → '+r.finalSource:''}${cat}`}
-function renderRecurring(){$('recurringList').innerHTML=recurring.map((r,i)=>`<div class="item"><div class="rec-wrap"><div class="rec-main"><div class="item-title">${r.name}${r.limited?' <span class="pill">期間限定</span>':''}${r.paused?' <span class="pill">停止中</span>':''}</div><div class="item-meta">${recurringMeta(r)}</div></div><div class="rec-side"><strong>${yen(r.amount)}</strong><div class="rec-actions"><button class="ghost sm" onclick="editRecurring(${i})">編集</button><button class="ghost sm mk-recurring-pause" onclick="toggleRecurringPause(${i})">${r.paused?'再開':'停止'}</button></div></div></div></div>`).join('')}
+function recurringMeta(r){const label=mkSettings.pays.find(x=>x[0]===r.finalSource)?.[1]||r.finalSource||'';let info=recCycleText(r)+'　'+(r.route||'')+(label?' → '+label:'');let next='';if(r.autoRecord){try{const date=mkRecurringDate(r,r.generatedCount||0);next=(r.limited&&((r.count>0&&r.generatedCount>=r.count)||(r.endDate&&date>r.endDate)))?'予定回数・期間が終了しています':'次回記録：'+date;next+=' ／ 記録済み '+(r.generatedCount||0)+'回'}catch(e){next='日付設定を確認してください'}}return safeHtml(info)+'<br>'+safeHtml(next)+(next?'<br>':'')+'<span class="cat-mini">'+safeHtml(r.category||'支出集計対象外')+'</span>'}
+function renderRecurring(){$('recurringList').innerHTML=recurring.map((r,i)=>`<div class="item"><div class="rec-wrap"><div class="rec-main"><div class="item-title">${safeHtml(r.name)}${r.autoRecord?' <span class="pill">自動記録</span>':' <span class="pill">メモのみ</span>'}${r.limited?' <span class="pill">期間限定</span>':''}${r.paused?' <span class="pill">停止中</span>':''}</div><div class="item-meta">${recurringMeta(r)}</div></div><div class="rec-side"><strong>${yen(r.amount)}</strong><div class="rec-actions"><button class="ghost sm" onclick="editRecurring(${i})">編集</button><button class="ghost sm mk-recurring-pause" onclick="toggleRecurringPause(${i})">${r.paused?'再開':'停止'}</button></div></div></div></div>`).join('')}
 function toggleRecurringForm(force){if(force!==true&& !$('mkRecurringModal').classList.contains('hidden')){cancelRecurringEdit();return}recurringEditIndex=-1;$('mkRecurringDelete').classList.add('hidden');$('mkRecurringModal').classList.remove('hidden')}
 function setRecType(t,b){recType=t;document.querySelectorAll('#recTypeBtns .mini').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('limitedFields').classList.toggle('hidden',t!=='limited')}
 function pickRecCat(){openPicker('支出カテゴリ',[{label:'支出集計対象外',value:''},...cats.map(c=>({label:c,value:c}))],(v,l)=>{recCategory=v;$('recCatBtn').firstElementChild.textContent=l})}
 function routeTarget(route){return mkSettings.routeTokens.find(([label])=>route.includes(label))?.[1]||''}
 function updateRecCycleFields(){let c=$('recCycle').value;$('recIntervalWrap').classList.toggle('hidden',!['days','weeks','months'].includes(c))}
 function recCycleText(r){let names={monthly:'毎月',weekly:'毎週',biweekly:'2週間ごと',months2:'2ヶ月ごと',months3:'3ヶ月ごと',months6:'6ヶ月ごと',yearly:'毎年',days:'指定日数ごと',weeks:'指定週数ごと',months:'指定月数ごと',custom:'その他・不定期'};return (names[r.cycle]||r.timing||'周期未設定')+(r.interval?'（'+r.interval+'）':'')+(r.payRule?'・'+r.payRule:'')}
-function saveRecurring(){let name=$('recName').value.trim(),amount=moneyNum($('recAmount').value),cycle=$('recCycle').value,route=$('recRoute').value.trim(),count=Number($('recCount').value||0),interval=Number($('recInterval').value||0),start=$('recStart').value,payRule=$('recPayRule').value.trim(),next=$('recNext').value,endDate=$('recEnd').value,finalSource=$('recFinalSource').value,memo=$('recMemo').value.trim();$('recError').textContent='';if(!name||amount<=0){$('recError').textContent='名前と金額を確認してね';return}if(['days','weeks','months'].includes(cycle)&&interval<=0){$('recError').textContent='指定周期の間隔を入力してね';return}if(start&&endDate&&endDate<start){$('recError').textContent='終了日は開始日以降にしてね';return}let old=recurringEditIndex>=0?recurring[recurringEditIndex]:null;let timing=recCycleText({cycle,interval,payRule});let obj={name,amount,timing,cycle,interval,start,payRule,next,endDate,route,finalSource,memo,target:old?.target||'',category:recCategory,limited:recType==='limited',count:recType==='limited'?count:0,paused:old?!!old.paused:false,event:old?.event||''};if(recType==='limited'&&count<=0&&!endDate){$('recError').textContent='期間限定は回数または終了日を入れてね';return}if(recType==='limited'&&$('recMakeEvent').checked&&count>0){let eventName=old&&old.event?old.event:name;let existing=eventsData.find(e=>e.name===eventName);if(!existing)eventsData.unshift({id:'ev'+Date.now(),name:eventName,start:'',end:'',budget:amount*count,catBudgets:{},archived:false,baseSpent:0});obj.event=eventName}if(recurringEditIndex>=0)recurring[recurringEditIndex]={...recurring[recurringEditIndex],...obj};else recurring.push(obj);cancelRecurringEdit();renderAll()}
-function editRecurring(i){let r=recurring[i];recurringEditIndex=i;$('mkRecurringModal').classList.remove('hidden');$('mkRecurringDelete').classList.remove('hidden');$('recName').value=r.name;$('recAmount').value=r.amount;$('recCycle').value=r.cycle||'custom';$('recStart').value=r.start||'';$('recPayRule').value=r.payRule||(!r.cycle?r.timing||'':'');$('recInterval').value=r.interval||'';$('recNext').value=r.next||'';$('recEnd').value=r.endDate||'';$('recRoute').value=r.route||'';$('recFinalSource').value=r.finalSource||'';$('recMemo').value=r.memo||'';updateRecCycleFields();recCategory=r.category||'';$('recCatBtn').firstElementChild.textContent=r.category||'支出集計対象外';recType=r.limited?'limited':'normal';document.querySelectorAll('#recTypeBtns .mini').forEach((b,j)=>b.classList.toggle('active',(j===1)===!!r.limited));$('limitedFields').classList.toggle('hidden',!r.limited);$('recCount').value=r.count||'';$('recMakeEvent').checked=!!r.event;refreshMoneyInputs();scrollTo(0,$('recurringForm').offsetTop-80)}
-function cancelRecurringEdit(){recurringEditIndex=-1;recType='normal';recCategory='';['recName','recAmount','recRoute','recCount','recStart','recPayRule','recInterval','recNext','recEnd','recMemo'].forEach(id=>$(id).value='');$('recCycle').value='monthly';$('recFinalSource').value='';updateRecCycleFields();$('recCatBtn').firstElementChild.textContent='選んでください';$('recMakeEvent').checked=false;$('recError').textContent='';$('limitedFields').classList.add('hidden');document.querySelectorAll('#recTypeBtns .mini').forEach((b,j)=>b.classList.toggle('active',j===0));$('mkRecurringModal').classList.add('hidden');$('mkRecurringDelete').classList.add('hidden')}
+function saveRecurringLegacy(){let name=$('recName').value.trim(),amount=moneyNum($('recAmount').value),cycle=$('recCycle').value,route=$('recRoute').value.trim(),count=Number($('recCount').value||0),interval=Number($('recInterval').value||0),start=$('recStart').value,payRule=$('recPayRule').value.trim(),next=$('recNext').value,endDate=$('recEnd').value,finalSource=$('recFinalSource').value,memo=$('recMemo').value.trim();$('recError').textContent='';if(!name||amount<=0){$('recError').textContent='名前と金額を確認してね';return}if(['days','weeks','months'].includes(cycle)&&interval<=0){$('recError').textContent='指定周期の間隔を入力してね';return}if(start&&endDate&&endDate<start){$('recError').textContent='終了日は開始日以降にしてね';return}let old=recurringEditIndex>=0?recurring[recurringEditIndex]:null;let timing=recCycleText({cycle,interval,payRule});let obj={name,amount,timing,cycle,interval,start,payRule,next,endDate,route,finalSource,memo,target:old?.target||'',category:recCategory,limited:recType==='limited',count:recType==='limited'?count:0,paused:old?!!old.paused:false,event:old?.event||''};if(recType==='limited'&&count<=0&&!endDate){$('recError').textContent='期間限定は回数または終了日を入れてね';return}try{Object.assign(obj,mkRecurringOptions(obj,old))}catch(e){$('recError').textContent=e.message;return}if(recType==='limited'&&$('recMakeEvent').checked&&count>0){let eventName=old&&old.event?old.event:name;let existing=eventsData.find(e=>e.name===eventName);if(!existing)eventsData.unshift({id:'ev'+Date.now(),name:eventName,start:'',end:'',budget:amount*count,catBudgets:{},archived:false,baseSpent:0});obj.event=eventName}if(recurringEditIndex>=0)recurring[recurringEditIndex]={...recurring[recurringEditIndex],...obj};else recurring.push(obj);cancelRecurringEdit();renderAll();mkRecurringRun()}
+function editRecurring(i){let r=recurring[i];recurringEditIndex=i;$('mkRecurringModal').classList.remove('hidden');$('mkRecurringDelete').classList.remove('hidden');$('recAuto').checked=r.autoRecord===true;$('recName').value=r.name;$('recAmount').value=r.amount;$('recCycle').value=r.cycle||'custom';$('recStart').value=r.start||'';$('recPayRule').value=r.payRule||(!r.cycle?r.timing||'':'');$('recInterval').value=r.interval||'';$('recNext').value=r.next||'';$('recEnd').value=r.endDate||'';$('recRoute').value=r.route||'';$('recFinalSource').value=r.finalSource||'';$('recMemo').value=r.memo||'';updateRecCycleFields();recCategory=r.category||'';$('recCatBtn').firstElementChild.textContent=r.category||'支出集計対象外';recType=r.limited?'limited':'normal';document.querySelectorAll('#recTypeBtns .mini').forEach((b,j)=>b.classList.toggle('active',(j===1)===!!r.limited));$('limitedFields').classList.toggle('hidden',!r.limited);$('recCount').value=r.count||'';$('recMakeEvent').checked=!!r.event;refreshMoneyInputs();scrollTo(0,$('recurringForm').offsetTop-80)}
+function cancelRecurringEdit(){ $('recAuto').checked=false;recurringEditIndex=-1;recType='normal';recCategory='';['recName','recAmount','recRoute','recCount','recStart','recPayRule','recInterval','recNext','recEnd','recMemo'].forEach(id=>$(id).value='');$('recCycle').value='monthly';$('recFinalSource').value='';updateRecCycleFields();$('recCatBtn').firstElementChild.textContent='選んでください';$('recMakeEvent').checked=false;$('recError').textContent='';$('limitedFields').classList.add('hidden');document.querySelectorAll('#recTypeBtns .mini').forEach((b,j)=>b.classList.toggle('active',j===0));$('mkRecurringModal').classList.add('hidden');$('mkRecurringDelete').classList.add('hidden')}
 function mkDeleteRecurring(){if(recurringEditIndex<0)return;if(!confirm('この定期支払いを削除しますか？'))return;recurring.splice(recurringEditIndex,1);cancelRecurringEdit();renderAll()}
-function toggleRecurringPause(i){recurring[i].paused=!recurring[i].paused;renderAll()}
+function toggleRecurringPause(i){const r=recurring[i];if(r.paused&&r.autoRecord&&!confirm('再開すると停止中に到来した分も記録します。不要な分は履歴から削除できます。再開しますか？'))return;r.paused=!r.paused;renderAll();mkRecurringRun()}
 
 function analysisMonthMove(n){const [y,m]=analysisMonth.split('-').map(Number);const d=new Date(y,m-1+n,1);analysisMonth=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');renderBudget()}
 function analysisSpend(t){return (['expense','lend','borrowed'].includes(t.type)?mkNetSpend(t):0)+(['expense','repay','receive','transfer'].includes(t.type)?Number(t.fee||0):0)}
@@ -1590,7 +1590,7 @@ async function mkBoot(){
   if(document.querySelector('.page.active')?.id==='memoManager'){history.replaceState({mkPage:'other'},'',location.href);mkMemoView='words';mkMemoScope='';mkMemoRender();mkMemoHistory()}
   new MutationObserver(()=>initMoneyInputs()).observe(document.body,{childList:true,subtree:true});
   document.documentElement.classList.remove('mk-settings-pending');
-  mkStorageReady=true;window.mkMountBackup?.();mkInitialMount();MKSecurity.ready();mkQueueSave();
+  mkStorageReady=true;window.mkMountBackup?.();mkInitialMount();MKSecurity.ready();mkQueueSave();await mkRecurringRun();
  }catch(e){console.error('Money Keeper: 画面の準備に失敗',e);mkShowSetup('画面を準備できませんでした。保存を停止しています。再読み込みして確認してください。')}
 }
 mkBoot();
@@ -2240,3 +2240,76 @@ function mkRequireStartDate(date,t=null,original=null){
 }
 
 $('mkInitialModal').addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();mkInitialClose()}if(e.key==='Tab'){const nodes=[...$('mkInitialModal').querySelectorAll('input,button,select')].filter(el=>!el.disabled&&!el.hidden&&el.getClientRects().length);if(!nodes.length)return;if(e.shiftKey&&(document.activeElement===nodes[0]||document.activeElement===$('mkInitialTitle'))){e.preventDefault();nodes.at(-1).focus()}else if(!e.shiftKey&&document.activeElement===nodes.at(-1)){e.preventDefault();nodes[0].focus()}}});
+
+/* Production 1.3: scheduled transactions, persisted cursor and atomic batch. */
+var mkRecurringBusy=false;
+function mkRecurringToday(){return new Date().toLocaleDateString('sv-SE')}
+function mkRecurringDate(r,n){
+ const first=r.firstDate||r.next||r.start;
+ if(!mkValidRecordDate(first)||!Number.isSafeInteger(n)||n<0)throw Error('初回の記録日を確認してください。');
+ const [y,m,d]=first.split('-').map(Number),months={monthly:1,months2:2,months3:3,months6:6,yearly:12,months:r.interval}[r.cycle];
+ if(months){const base=new Date(Date.UTC(y,m-1+n*months,1));const day=Math.min(d,new Date(Date.UTC(base.getUTCFullYear(),base.getUTCMonth()+1,0)).getUTCDate());return new Date(Date.UTC(base.getUTCFullYear(),base.getUTCMonth(),day)).toISOString().slice(0,10)}
+ const days={weekly:7,biweekly:14,days:r.interval,weeks:r.interval*7}[r.cycle];
+ if(!Number.isSafeInteger(days)||days<1)throw Error('不定期の支払いは自動記録できません。');
+ return new Date(Date.UTC(y,m-1,d+n*days)).toISOString().slice(0,10);
+}
+function mkRecurringOptions(r,old){
+ const auto=$('recAuto').checked;
+ if(!mkValidMoney(r.amount,1))throw Error('金額は1円以上の整数で入力してください。');
+ if(!auto)return {autoRecord:false,autoId:old?.autoId||crypto.randomUUID(),firstDate:old?.firstDate||'',generatedCount:old?.generatedCount||0};
+ const first=r.next||r.start;
+ if(!mkValidRecordDate(first)||!mkValidRecordDate(r.start))throw Error('自動記録には開始日が必要です。初回の記録日も確認してください。');
+ if(first<r.start||first<(mkOpening?.startDate||'0000-01-01'))throw Error('初回の記録日は開始日・使い始めの日以降にしてください。');
+ if(r.endDate&&(!mkValidRecordDate(r.endDate)||r.endDate<first))throw Error('終了日は初回の記録日以降にしてください。');
+ if(!cats.includes(r.category))throw Error('自動記録する支出カテゴリを選んでください。');
+ if(!mkSettings.pays.some(x=>x[0]===r.finalSource)||r.finalSource==='rakutenpay')throw Error('自動記録の支払方法を選んでください。楽天Payは実際の支払元を選択してください。');
+ if(['days','weeks','months'].includes(r.cycle)&&(!Number.isSafeInteger(r.interval)||r.interval<1||r.interval>1200))throw Error('間隔は1〜1200の整数にしてください。');
+ if(!Number.isSafeInteger(r.count)||r.count<0||r.count>1200)throw Error('回数は0〜1200の整数にしてください。');
+ if(r.limited&&!r.count&&!r.endDate)throw Error('期間限定には回数または終了日が必要です。');
+ const trial={...r,firstDate:first};mkRecurringDate(trial,1);
+ const rule=r.payRule.trim();if(rule){const day=Number(first.slice(8));const week='日月火水木金土'[new Date(first+'T00:00:00Z').getUTCDay()];if(![String(day),day+'日',week+'曜',week+'曜日'].includes(rule))throw Error('支払日・曜日は初回の記録日に合わせてください。空欄でも設定できます。');}
+ if(old?.generatedCount>0&&(first!==old.firstDate||r.cycle!==old.cycle||r.interval!==old.interval))throw Error('記録済みの周期・初回日は変更できません。この設定を停止して、新しい定期支払いを登録してください。');
+ if(!old?.autoRecord&&!confirm('初回 '+first+' から、すでに到来した分も自動記録します。手入力済み・開始前の未払い分と重複しない日付ですか？'))throw Error('初回の記録日を確認してください。');
+ return {autoRecord:true,autoId:old?.autoId||crypto.randomUUID(),firstDate:first,generatedCount:old?.generatedCount||0,target:''};
+}
+function saveRecurring(){if(mkRecurringBusy)return;saveRecurringLegacy()}
+function mkRecurringBuild(state,today){
+ const out=structuredClone(state);let added=0;
+ for(const r of out.recurring||[]){
+  if(!r.autoRecord||r.paused)continue;
+  if(!r.autoId||!Number.isSafeInteger(r.generatedCount)||r.generatedCount<0||!mkValidMoney(r.amount,1)||!cats.includes(r.category)||!mkSettings.pays.some(x=>x[0]===r.finalSource)||r.finalSource==='rakutenpay')throw Error('定期支払い「'+r.name+'」の設定を確認してください。');
+  for(let guard=0;guard<1201;guard++){
+   const n=r.generatedCount,date=mkRecurringDate(r,n);
+   if(date>today||(r.limited&&((r.count>0&&n>=r.count)||(r.endDate&&date>r.endDate))))break;
+   if(guard===1200)throw Error('一度に記録できる上限を超えました。開始日を確認してください。');
+   if(date<(out.mkOpening?.startDate||'0000-01-01'))throw Error('定期支払いの初回日は使い始めの日以降にしてください。');
+   const id='rec:'+r.autoId+':'+date;
+   if(!out.txs.some(t=>t.id===id||t.recurringKey===id)){
+    const card=finalCardForPayment(r.finalSource,'');const due=card?dueForPurchase(card,date):'';
+    if(card&&(out.mkPaidBills?.[card+'|'+due]||Object.hasOwn(out.billAdjustments||{},card+'|'+due)))throw Error('「'+r.name+'」の請求額が確定済みです。請求の確定を取り消してから再確認してください。');
+    const t={id,recurringKey:id,recurringId:r.autoId,date,type:'expense',amount:r.amount,paid:r.amount,billed:r.amount,fee:0,category:r.category,payment:r.finalSource,memo:r.name+(r.memo?' '+r.memo:''),points:0,coupon:0,discount:0,installments:1,eventTag:r.event||''};
+    out.txs.unshift(t);const account=mkSettings.balanceRoutes[r.finalSource];
+    if(account){if(!Object.hasOwn(out.balances,account))throw Error('支払元の残高がありません。');out.balances[account]-=r.amount;out.cashbook.unshift({date,text:r.category+'・'+t.memo,delta:-r.amount,refId:id});}
+    added++;
+   }
+   r.generatedCount++;
+  }
+ }
+ return {state:out,added};
+}
+async function mkRecurringRun(){
+ if(mkRecurringBusy||!mkStorageReady||!MKStorage.isUnlocked())return;
+ mkRecurringBusy=true;const locked=[...document.body.children].map(el=>[el,el.inert]);locked.forEach(([el])=>el.inert=true);
+ clearTimeout(mkSaveTimer);mkSaveTimer=null;mkStorageReady=false;
+ try{
+  await MKStorage.flush();
+  const before=mkState(),result=mkRecurringBuild(before,mkRecurringToday());
+  if(JSON.stringify(before)!==JSON.stringify(result.state)){
+   mkValidateStoredSettings(result.state);await MKStorage.save(result.state);mkRestoreState(result.state);
+  }
+  $('mkRecurringStatus').textContent=result.added?'定期支払いを'+result.added+'件記録しました。履歴で確認できます。':'';
+ }catch(e){$('mkRecurringStatus').textContent='自動記録は完了していません：'+e.message;}
+ finally{mkStorageReady=true;mkRecurringBusy=false;locked.forEach(([el,was])=>el.inert=was);renderAll();}
+}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')mkRecurringRun()});
+setInterval(()=>{if(document.visibilityState==='visible')mkRecurringRun()},60000);
