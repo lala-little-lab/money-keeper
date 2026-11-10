@@ -784,6 +784,7 @@ function mkValidateSettings(c){
  if(!obj(c.labels)||Object.keys(c.labels).length!==pays.size||!Object.entries(c.labels).every(([k,v])=>pays.has(k)&&label(v)))fail();
  if(!list(c.cards)||!c.cards.every(x=>obj(x)&&key(x.id)&&pays.has(x.id)&&label(x.name)&&label(x.account)&&accounts.has(x.accountId)&&!accounts.has(x.id)&&Number.isInteger(x.closeDay)&&x.closeDay>=1&&x.closeDay<=31&&Number.isInteger(x.dueDay)&&x.dueDay>=1&&x.dueDay<=31&&typeof x.monthEnd==='boolean'&&obj(x.known)&&Object.entries(x.known).every(([d,n])=>mkValidRecordDate(d)&&Number.isSafeInteger(n)&&n>=0))||!unique(c.cards.map(x=>x.id)))fail();
  for(const card of c.cards){
+  if(card.confirmDay!==undefined&&(!Number.isInteger(card.confirmDay)||card.confirmDay<0||card.confirmDay>31))fail();
   if(card.schedules!==undefined){if(!list(card.schedules)||!card.schedules.every((x,i)=>obj(x)&&/^\d{4}-(0[1-9]|1[0-2])$/.test(x.from)&&x.from>='2000-01'&&x.from<='2199-12'&&(!i||card.schedules[i-1].from<x.from)&&Number.isInteger(x.closeDay)&&x.closeDay>=1&&x.closeDay<=31&&typeof x.monthEnd==='boolean'&&Number.isInteger(x.dueDay)&&x.dueDay>=1&&x.dueDay<=31&&accounts.has(x.accountId)))fail();}
  }
  const cards=new Set(c.cards.map(x=>x.id));
@@ -1374,13 +1375,18 @@ let mkStorageReady=false, mkSaveTimer=null, mkCanRestore=false, mkSetupMode=fals
 
 // TODO: derived reminders are computed from app data; manual items are persisted.
 function mkToday(){const d=new Date();return dateISO(d.getFullYear(),d.getMonth()+1,d.getDate())}
+function mkBillCheckReady(card,due,today=mkToday()){
+ const day=cardDefs[card].confirmDay||0;if(!day)return true;
+ let [y,m,d]=due.split('-').map(Number);if(day>d)[y,m]=addMonthsYM(y,m,-1);
+ return today>=dateISO(y,m,Math.min(day,new Date(y,m,0).getDate()));
+}
 function mkTodoItems(){
  const today=mkToday(),list=[];for(const g of mkGroupList()){if(g.net)list.push({key:'group|'+g.id,title:'✓ '+g.name+'：'+mkGroupBalanceText(g.net),kind:'group',paymentGroupId:g.id,auto:true,emphasis:true});}
  for(const card of Object.keys(cardDefs)){
   const due=visibleBills(card)[0],amount=amountForBill(card,due),status=statusForBill(card,due);
   if(amount<=0||due<today)continue;
   const key='check|'+card+'|'+due;
-  if(status==='candidate'&&!mkTodoHidden[key])list.push({key,title:cardDefs[card].name+'の請求額を確認',due,kind:'check',card,auto:true});
+  if(status==='candidate'&&mkBillCheckReady(card,due,today)&&!mkTodoHidden[key])list.push({key,title:cardDefs[card].name+'の請求額を確認',due,kind:'check',card,auto:true});
  }
  for(const card of Object.keys(cardDefs)){
    const dates=new Set([...Object.keys(billAdjustments).filter(k=>k.startsWith(card+'|')).map(k=>k.slice(card.length+1)),...visibleBills(card),...Object.keys(cardDefs[card].known)]);
@@ -1557,7 +1563,8 @@ function mkQueueSave(){
   MKSecurity.message('保存待ち');
   mkSaveTimer=setTimeout(()=>{
     mkSaveTimer=null;
-    MKStorage.save(mkState()).then(()=>MKSecurity.message('保存済み')).catch(MKSecurity.failed);
+    const snapshot=structuredClone(mkState());
+    MKStorage.save(snapshot).then(()=>MKSecurity.saved(snapshot)).catch(MKSecurity.failed);
   },200);
 }
 // Some edit actions re-render only their own component; persist those as well.
@@ -1699,6 +1706,7 @@ function mkSettingsGrip(row,key,move){
   const up=()=>finish(true),cancel=()=>finish(false);grip.addEventListener('pointermove',motion);grip.addEventListener('pointerup',up);grip.addEventListener('pointercancel',cancel);grip.addEventListener('lostpointercapture',cancel);
  };
 }
+function mkChargeSourceCandidates(c){return c.pays.filter(([k])=>!c.ui.hiddenPays.includes(k)&&(c.cards.some(x=>x.id===k)||c.accounts.some(x=>x.id===k)))}
 function mkSettingsRenderLayouts(body){
  const c=mkSettingsDraft;
  const tabs=document.createElement('div');tabs.className='mk-layout-tabs';tabs.setAttribute('role','tablist');
@@ -1709,6 +1717,11 @@ function mkSettingsRenderLayouts(body){
   const preview=document.createElement('div');preview.className='mk-settings-preview';
   for(const [i,row] of c.layouts[zone].entries()){const r=document.createElement('div');r.className='mk-settings-preview-row';if(zone==='income'&&i===2&&!c.ui.customIncome)r.style.maxWidth='25%';for(const k of row.filter(k=>!c.ui.hiddenPays.includes(k))){const span=document.createElement('span');span.textContent=mkSettingsName(k);r.append(span)}if(r.children.length)preview.append(r)}body.append(preview);
   const flat=c.layouts[zone].flat();
+  if(zone==='charge'){
+   const available=mkChargeSourceCandidates(c).filter(([k])=>!flat.includes(k));
+   if(available.length){const select=document.createElement('select');select.setAttribute('aria-label','追加するチャージ元');for(const [k,n] of available)select.add(new Option(n,k));body.append(select,mkSettingsButton('チャージ元に追加',()=>{mkSettingsPack('charge',[...c.layouts.charge.flat(),select.value]);mkSettingsRender()},'outline'))}
+   body.append(mkSettingsText('登録済みのカード・口座を追加できます。追加後、記録画面の「設定変更」でいつものチャージ元に指定できます。','small mk-settings-note'));
+  }
   for(let i=0;i<c.layouts[zone].length;i++){
    const line=document.createElement('div');line.className='mk-settings-layout-row';line.append(document.createTextNode((i+1)+'行目'));
    const sel=document.createElement('select');sel.setAttribute('aria-label',title+' '+(i+1)+'行目の個数');for(let n=1;n<=4;n++){const o=new Option(n+'個',n);sel.add(o)}sel.value=c.layouts[zone][i].length;sel.onchange=()=>{const caps=c.layouts[zone].map(x=>x.length);caps[i]=Number(sel.value);mkSettingsPack(zone,flat,caps);if(zone==='income')c.ui.customIncome=true;mkSettingsRender()};line.append(sel);body.append(line);
@@ -1842,12 +1855,13 @@ function mkCardMinMonth(card){
 }
 function mkCardForm(key){
  const c=mkSettingsDraft.cards.find(x=>x.id===key),rule=c?{...c,...c.schedules?.at(-1)}:null;
- return {name:c?.name||'',close:rule?(rule.monthEnd?'end':String(rule.closeDay)):'end',due:String(rule?.dueDay||27),account:rule?.accountId||'',from:c?mkCardMinMonth(c):''};
+ return {confirmDay:String(c?.confirmDay||0),name:c?.name||'',close:rule?(rule.monthEnd?'end':String(rule.closeDay)):'end',due:String(rule?.dueDay||27),account:rule?.accountId||'',from:c?mkCardMinMonth(c):''};
 }
 function mkRenderCards(body){
  const head=document.createElement('div');head.className='mk-settings-add-head';head.append(mkSettingsButton('＋追加',()=>mkSettingsNavigate('cards',{kind:'card',key:''},2),'outline'));body.append(head);
  for(const card of mkSettingsDraft.cards){const row=document.createElement('div');row.className='item';const top=document.createElement('div');top.className='row';const title=document.createElement('strong');title.textContent=card.name;top.append(title,mkSettingsButton('編集',()=>mkSettingsNavigate('cards',{kind:'card',key:card.id},2)));row.append(top);
  const text=r=>'締め日：'+(r.monthEnd?'月末':r.closeDay+'日')+' ／ 引落日：翌月'+r.dueDay+'日';row.append(mkSettingsText(text(card)),mkSettingsText('引落口座：'+mkSettingsDraft.accounts.find(x=>x.id===card.accountId)?.name));
+ row.append(mkSettingsText('請求額の確認開始日：'+(card.confirmDay?card.confirmDay+'日':'指定なし（締め日後）')));
  for(const r of card.schedules||[])row.append(mkSettingsText(r.from.replace('-','年')+'月の引落から：'+text(r)+' ／ '+mkSettingsDraft.accounts.find(x=>x.id===r.accountId)?.name));body.append(row);
  }
 }
@@ -1859,6 +1873,8 @@ function mkRenderCardEditor(body){
  function select(title,id,prop,options){const el=document.createElement('select');el.id=id;for(const [k,n] of options)el.add(new Option(n,k));el.value=v[prop];el.onchange=()=>{v[prop]=el.value;updateMonth()};return field(title,el)}
  select('締め日','mkCardClose','close',[['end','月末'],...Array.from({length:31},(_,i)=>[String(i+1),(i+1)+'日'])]);
  select('引落日（翌月）','mkCardDue','due',Array.from({length:31},(_,i)=>[String(i+1),(i+1)+'日']));
+ select('請求額の確認開始日','mkCardConfirmDay','confirmDay',[['0','指定なし（締め日後）'],...Array.from({length:31},(_,i)=>[String(i+1),(i+1)+'日'])]);
+ body.append(mkSettingsText('この日以降に、未確定の請求額を確認するやることを表示します。引落日より後の日を選ぶと前月の日付になります。実際の確定はカード会社の明細で確認してください。','small mk-settings-note'));
  const accounts=mkSettingsDraft.accounts.filter(a=>a.kind==='bank'||(!a.kind&&a.id!=='cash'&&!mkSettingsDraft.chargeTargets.some(x=>x[0]===a.id)));
  select('引落口座','mkCardAccount','account',[['','選んでください'],...accounts.map(a=>[a.id,a.name])]);
  const month=document.createElement('input');month.type='month';month.id='mkCardFrom';month.value=v.from;if(key)month.min=mkCardMinMonth(mkSettingsDraft.cards.find(c=>c.id===key));month.oninput=()=>v.from=month.value;
@@ -1878,16 +1894,17 @@ function mkCommitCard(slot,back){
  const bank=c.accounts.find(a=>a.id===v.account&&(a.kind==='bank'||(!a.kind&&a.id!=='cash'&&!c.chargeTargets.some(x=>x[0]===a.id))));if(!bank)return fail('引落口座を選んでください。');
  const rule={closeDay:v.close==='end'?31:Number(v.close),monthEnd:v.close==='end',dueDay:Number(v.due),accountId:bank.id};
  if(!Number.isInteger(rule.closeDay)||rule.closeDay<1||rule.closeDay>31||!Number.isInteger(rule.dueDay)||rule.dueDay<1||rule.dueDay>31)return fail('締め日・引落日を確認してください。');
+ const confirmDay=Number(v.confirmDay);if(!Number.isInteger(confirmDay)||confirmDay<0||confirmDay>31)return fail('確認開始日を選んでください。');
  const next=structuredClone(c);
  if(key){const card=next.cards.find(x=>x.id===key);if(!card)return fail('カードが見つかりません。');
  const prev={...card,...card.schedules?.at(-1)},changed=['closeDay','monthEnd','dueDay','accountId'].some(k=>prev[k]!==rule[k]);
  if(changed){if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(v.from)||v.from<mkCardMinMonth(card)||v.from>'2199-12')return fail('適用月は '+mkCardMinMonth(card)+' 以降を選んでください。');card.schedules=[...(card.schedules||[]),{from:v.from,...rule}]}
  for(const old of [card.name,next.labels[key]])if(old&&old!==name&&!Object.hasOwn(next.aliases,old))next.aliases[old]=key;
- card.name=name;next.labels[key]=name;for(const pairs of [next.pays,next.rakutenSources,next.recurringSources])for(const pair of pairs)if(pair[0]===key)pair[1]=name;
+ card.confirmDay=confirmDay;card.name=name;next.labels[key]=name;for(const pairs of [next.pays,next.rakutenSources,next.recurringSources])for(const pair of pairs)if(pair[0]===key)pair[1]=name;
  }else{
  if(next.cards.length>=200||next.pays.length>=200)return fail('登録できる件数の上限に達しています。');
  let id;do{id='card_'+crypto.randomUUID().replace(/-/g,'')}while(next.pays.some(x=>x[0]===id));
- next.cards.push({id,name,account:bank.name,...rule,known:{}});next.pays.push([id,name]);next.labels[id]=name;next.cardRoutes[id]=id;next.layouts.more.push([id]);next.ui.payOrder.push(id);next.installmentPays.push(id);
+ next.cards.push({id,name,account:bank.name,...rule,confirmDay,known:{}});next.pays.push([id,name]);next.labels[id]=name;next.cardRoutes[id]=id;next.layouts.more.push([id]);next.ui.payOrder.push(id);next.installmentPays.push(id);
  }
  try{mkValidateSettings(next)}catch(e){return fail('設定を確認してください。保存できません。')}
  mkSettingsDraft=next;delete mkCardBuffers[slot];$('mkSettingsError').textContent='';if(back)history.back();return true;

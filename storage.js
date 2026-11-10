@@ -33,7 +33,7 @@ const MKStorage=(()=>{
 // The lock hides and disables the existing document, preserving unsubmitted forms
 // in this tab's memory. Reload/close discards that memory and always requires unlock.
 const MKSecurity=(()=>{
- let busy=false,hiddenAt=null,timer=null,locking=false,covered=false,active=false;
+ let busy=false,hiddenAt=null,timer=null,locking=false,covered=false,active=false,retrying=false;
  const inertBefore=new Map();
  function shield(){
   const on=covered||active;
@@ -63,9 +63,14 @@ const MKSecurity=(()=>{
   });
  }
  function message(text){const el=document.getElementById('mkSaveStatus');if(el)el.textContent=text}
+ function saved(snapshot){
+  // A completed old write must never dismiss a newer failure or unsaved changes.
+  if(!mkStorageReady||JSON.stringify(snapshot)!==JSON.stringify(mkState()))return false;
+  message('保存済み');document.getElementById('mkSaveBar').hidden=true;document.getElementById('mkRetrySave').hidden=true;return true;
+ }
  async function flush(){clearTimeout(mkSaveTimer);mkSaveTimer=null;await MKStorage.flush();if(mkSetupMode)return;await MKStorage.save(mkState())}
  async function lock(){
-  if(locking||!MKStorage.isUnlocked())return;
+  if(retrying||locking||!MKStorage.isUnlocked())return;
   if(busy||active||mkSettingsBusy||mkMemberBusy||mkInitialBusy||(!mkStorageReady&&!mkSetupMode&&document.getElementById('mkSaveBar').hidden)){clearTimeout(timer);timer=setTimeout(lock,250);return}
   locking=true;cover(true);clearTimeout(timer);
   try{
@@ -76,13 +81,16 @@ const MKSecurity=(()=>{
   const previous=JSON.stringify(mkState());mkStorageReady=false;MKStorage.forget();
   try{const data=await MKStorage.load();
    if(data&&JSON.stringify(data)!==previous){location.reload();return}
-   mkStorageReady=!mkSetupMode;locking=false;hiddenAt=document.hidden?Date.now():null;cover(document.hidden);message('保存済み');
+   mkStorageReady=!mkSetupMode;locking=false;hiddenAt=document.hidden?Date.now():null;cover(document.hidden);saved(mkState());
    if(document.hidden)timer=setTimeout(lock,300000);
   }catch(e){message('ロックを解除できません：'+e.message);location.reload()}
  }
  function failed(e){mkStorageReady=false;message('保存できていません。画面を閉じずに再試行するか、その他から暗号化バックアップを保存してください。 '+(e?.message||'保存エラー'));document.getElementById('mkSaveBar').hidden=false;document.getElementById('mkRetrySave').hidden=false}
- async function retry(){try{clearTimeout(mkSaveTimer);await MKStorage.flush().catch(()=>{});if(!mkSetupMode)await MKStorage.save(mkState());mkStorageReady=!mkSetupMode;message('保存済み');document.getElementById('mkSaveBar').hidden=true;document.getElementById('mkRetrySave').hidden=true}catch(e){failed(e)}}
- async function change(){if(locking||busy||active||!mkStorageReady||mkSettingsBusy||mkMemberBusy||mkInitialBusy)return;clearTimeout(mkSaveTimer);try{await flush()}catch(e){failed(e);return}mkStorageReady=false;await prompt('パスワード変更',true,async password=>{await MKStorage.changePassword(mkState(),password);return true},true);mkStorageReady=true;message('保存済み')}
+ async function retry(){
+  if(retrying||locking||busy||active)return;retrying=true;cover(true);mkStorageReady=false;
+  try{clearTimeout(mkSaveTimer);await MKStorage.flush().catch(()=>{});const snapshot=structuredClone(mkState());if(!mkSetupMode)await MKStorage.save(snapshot);mkStorageReady=!mkSetupMode;saved(snapshot)}catch(e){failed(e)}finally{retrying=false;cover(document.hidden)}
+ }
+ async function change(){if(locking||busy||active||!mkStorageReady||mkSettingsBusy||mkMemberBusy||mkInitialBusy)return;clearTimeout(mkSaveTimer);try{await flush()}catch(e){failed(e);return}mkStorageReady=false;await prompt('パスワード変更',true,async password=>{await MKStorage.changePassword(mkState(),password);return true},true);mkStorageReady=true;saved(mkState())}
  function ready(){if(document.hidden){hiddenAt=Date.now();cover(true);timer=setTimeout(lock,300000)}}
  document.addEventListener('visibilitychange',()=>{
   if(!MKStorage.isUnlocked())return;
@@ -91,5 +99,5 @@ const MKSecurity=(()=>{
  });
  window.addEventListener('pageshow',e=>{if(e.persisted)location.reload()});
  window.addEventListener('beforeunload',e=>{if(!document.getElementById('mkSaveBar').hidden){e.preventDefault();e.returnValue=''}});
- return {prompt,lock,change,retry,failed,message,flush,ready};
+ return {prompt,lock,change,retry,failed,message,saved,flush,ready};
 })();
