@@ -944,6 +944,7 @@ function cardRow(card){let [a,b]=visibleBills(card),c=mkCardRule(card,a),sa=stat
 // Pure projection: never creates records, changes balances, or advances recurring cursors.
 function mkPreparation(today=mkToday()){
  const [y,m,d]=today.split('-').map(Number),[ey,em]=addMonthsYM(y,m,2),end=mkDueDate(ey,em,d),groups=new Map(),warnings=[];
+ const [py,pm]=addMonthsYM(y,m,d<=10?0:1),prepEnd=dateISO(py,pm,10);
  function add(account,item){
   if(!balances[account]||item.amount<=0||item.due>end)return;
   if(!groups.has(account))groups.set(account,{account,name:balances[account].name,balance:balances[account].v,items:[]});
@@ -980,16 +981,32 @@ function mkPreparation(today=mkToday()){
   const daily=new Map();for(const item of g.items)daily.set(item.due,(daily.get(item.due)||0)+item.amount);
   for(const [due,amount] of daily){g.total+=amount;if(!g.firstShortDate&&g.total>g.balance){g.firstShortDate=due;g.firstShortage=g.total-g.balance}}
   g.shortage=Math.max(0,g.total-g.balance);
+  g.prepTotal=0;g.prepFirstShortDate='';
+  for(const [due,amount] of daily){if(due>prepEnd)break;g.prepTotal+=amount;if(!g.prepFirstShortDate&&g.prepTotal>g.balance)g.prepFirstShortDate=due}
+  g.prepShortage=g.prepFirstShortDate?Math.max(0,g.prepTotal-g.balance):0;
  }
- return {today,end,groups:[...groups.values()],warnings};
+ return {today,end,prepEnd,groups:[...groups.values()],warnings};
+}
+let mkPrepExpanded=new Set();
+function mkTogglePreparation(button){
+ const key=button.dataset.account,open=button.getAttribute('aria-expanded')!=='true';
+ if(open)mkPrepExpanded.add(key);else mkPrepExpanded.delete(key);
+ button.setAttribute('aria-expanded',String(open));
+ button.querySelector('.mk-prep-arrow').textContent=open?'▲':'▼';
+ $(button.getAttribute('aria-controls')).hidden=!open;
 }
 function mkRenderPreparation(){
  const p=mkPreparation(),esc=safeHtml;
- const note='<p class="small">対象：'+esc(p.today)+' ～ '+esc(p.end)+'（未処理の過去分も含む）</p><p class="small">登録済みのカード請求と、自動記録ONの口座引落予定で計算します。今後の買い物・未記録のカード定期払い・予定収入は含みません。</p>';
- $('prep').innerHTML=note+p.warnings.map(x=>'<p class="warnbox">'+esc(x)+'</p>').join('')+(p.groups.length?p.groups.map(g=>{
-  const details=g.items.map(x=>'<div class="small">'+esc(fmtMD(x.due)+' '+x.label)+' '+yen(x.amount)+'（'+(x.overdue?'未処理・':'')+statusText(x.status)+'）</div>').join('');
-  const result=g.shortage?'<div class="warnbox"><div class="small">'+(g.firstShortDate<p.today?'期限を過ぎた未処理分を確認してください':esc(fmtMD(g.firstShortDate))+'の引落前までに')+'</div><strong>'+yen(g.firstShortage)+' 不足</strong>'+(g.shortage>g.firstShortage?'<div class="small">対象期間分をまとめて準備するなら '+yen(g.shortage)+'</div>':'')+'</div>':'<p class="small">✓ 登録済み予定分は準備OK</p>';
-  return '<div class="item"><div class="item-title">'+esc(g.name)+'</div>'+details+'<div class="row"><span class="small">対象の引落合計</span><strong>'+yen(g.total)+'</strong></div><div class="row"><span class="small">現在残高</span><strong>'+yen(g.balance)+'</strong></div>'+result+'</div>';
+ $('mkPrepPeriod').textContent=fmtMD(p.prepEnd)+'分まで';
+ const note='<p class="small">準備する分：'+esc(p.today)+' ～ '+esc(p.prepEnd)+'（未処理の過去分も含む）</p><p class="small">登録済みのカード請求と、自動記録ONの口座引落予定で計算。未記録のカード定期払い・予定収入は含みません。</p>';
+ $('prep').innerHTML=note+p.warnings.map(x=>'<p class="mk-prep-alert">'+esc(x)+'</p>').join('')+(p.groups.length?p.groups.map(g=>{
+  const open=mkPrepExpanded.has(g.account),id='mk-prep-items-'+g.account;
+  const rows=items=>items.map(x=>'<div class="small">'+esc(fmtMD(x.due)+' '+x.label)+' '+yen(x.amount)+'（'+(x.overdue?'未処理・':'')+statusText(x.status)+'）</div>').join('');
+  const near=g.items.filter(x=>x.due<=p.prepEnd),later=g.items.filter(x=>x.due>p.prepEnd);
+  const details='<div id="'+esc(id)+'" class="mk-prep-details"'+(open?'':' hidden')+'>'+rows(near)+(later.length?'<p class="small mk-prep-later-title">その先の予定（'+esc(fmtMD(p.end))+'まで）</p>'+rows(later):'')+'</div>';
+  const result=g.prepShortage?'<div class="mk-prep-alert"><div class="mk-prep-alert-line"><span>'+esc(fmtMD(g.prepFirstShortDate))+'の引落前までに</span> <strong>'+yen(g.prepShortage)+' 不足</strong></div><div class="small">'+esc(fmtMD(p.prepEnd))+'分までまとめた不足額'+(g.prepFirstShortDate<p.today?'・期限超過分を確認してください':'')+'</div></div>':'<p class="small mk-prep-ok">✓ '+esc(fmtMD(p.prepEnd))+'までの登録済み予定分は準備OK</p>';
+  const forecast=later.length?'<p class="small mk-prep-forecast">'+esc(fmtMD(p.end))+'までの不足見込み：'+yen(g.shortage)+'（変動あり）</p>':'';
+  return '<div class="item mk-prep-account"><button type="button" class="mk-prep-toggle" data-account="'+esc(g.account)+'" aria-expanded="'+open+'" aria-controls="'+esc(id)+'" onclick="mkTogglePreparation(this)"><span>'+esc(g.name)+'</span><span class="mk-prep-arrow" aria-hidden="true">'+(open?'▲':'▼')+'</span></button>'+details+'<div class="mk-prep-totals"><span class="small">対象の引落合計</span><strong>'+yen(g.prepTotal)+'</strong><span class="small">現在残高</span><strong>'+yen(g.balance)+'</strong></div>'+result+forecast+'</div>';
  }).join(''):'<p class="small">対象の引落予定はありません。</p>');
 }
 
@@ -1449,9 +1466,9 @@ function mkTodoItems(){
  }
  
  for(const g of mkPreparation().groups){
-  if(!g.shortage)continue;
-  const key='fund|'+g.account+'|'+g.firstShortDate;
-  if(!mkTodoHidden[key])list.push({key,title:g.name+'へ '+yen(g.shortage)+' 入金',due:g.firstShortDate,kind:'fund',auto:true,shortage:g.shortage,card:g.items.find(x=>x.card)?.card||'',estimated:g.items.some(x=>x.status!=='confirmed')});
+  if(!g.prepShortage)continue;
+  const key='fund|'+g.account+'|'+g.prepFirstShortDate;
+  if(!mkTodoHidden[key])list.push({key,title:g.name+'へ '+yen(g.prepShortage)+' 入金',due:g.prepFirstShortDate,kind:'fund',auto:true,shortage:g.prepShortage,card:g.items.find(x=>x.card)?.card||'',estimated:g.items.some(x=>x.status!=='confirmed')});
  }
  for(const t of mkTodos){
   if(t.done||t.hidden)continue;
