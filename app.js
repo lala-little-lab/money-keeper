@@ -542,7 +542,7 @@ function editRecord(id){let t=txs.find(x=>x.id===id);if(!t)return;if(t.opening)r
   $('editBody').innerHTML=`<div class="small" style="margin-bottom:9px">登録日：${safeHtml(t.date)}（変更なし）</div><div class="field"><label>貸し・借り</label><select id="editExtraType"><option value="loanExtraLend" ${t.type==='loanExtraLend'?'selected':''}>貸し</option><option value="loanExtraBorrow" ${t.type==='loanExtraBorrow'?'selected':''}>借り</option></select></div><div class="field"><label>金額</label><input id="editExtraAmount" type="text" inputmode="numeric" min="1" step="1" value="${Number(t.amount)}"></div><div class="field"><label>相手</label><input id="editExtraPerson" maxlength="60" value="${safeHtml(t.person)}"></div><div class="field"><label>メモ（任意）</label><input id="editExtraMemo" maxlength="300" value="${safeHtml(t.memo||'')}"></div>`;
   compactEditLayout(t);$('editError').textContent='';$('editModal').classList.remove('hidden');return;
  }
- let h=`<div class="field"><label>日付</label><input id="editDate" type="date" value="${t.date}"></div>`;if(t.type==='lend'){h+=`<div class="grid2"><div class="field"><label>会計総額</label><input id="editGross" type="text" value="${t.gross||0}"></div><div class="field"><label>自分の分</label><input id="editMine" type="text" value="${t.amount||0}"></div></div><div class="field"><label>相手の分</label><input id="editOther" type="text" value="${t.other||0}"></div>`}else h+=`<div class="field"><label>金額</label><input id="editAmount" type="text" value="${t.amount||0}"></div>`;if(['expense','lend','borrowed'].includes(t.type))h+=`<div class="field"><label>カテゴリ</label><select id="editCategory">${selectOptions(cats.map(c=>[c,c]),t.category||'')}</select></div>`;if(['expense','income','lend','repay','receive','loanBorrow','loanLend'].includes(t.type)){let ep=t.type==='income'?incomePays:pays;let el=t.type==='income'?'入金先':'支払・受取方法';h+=`<div class="field"><label>${el}</label><select id="editPayment">${selectOptions(ep,t.payment||'')}</select></div>`;}if(['expense','lend'].includes(t.type))h+=`<div class="field" id="editRakPaySourceField" style="${t.payment==='rakutenpay'?'':'display:none'}"><label>楽天Payの支払元</label><select id="editRakPaySource">${selectOptions(mkSettings.rakutenSources,t.rakutenPaySource||mkSettings.rakutenSources[0]?.[0]||'')}</select></div>`;if(['expense','repay','receive'].includes(t.type))h+=`<div class="field"><label>手数料（任意）</label><input id="editRecordFee" type="text" inputmode="numeric" value="${t.fee||0}"></div>`;if(['expense','lend'].includes(t.type))h+=`<div class="grid2"><div class="field"><label>ポイント使用</label><input id="editPoints" type="number" inputmode="numeric" min="0" step="1" value="${t.points||0}"></div><div class="field"><label for="editCoupon">クーポン使用</label><input id="editCoupon" type="text" inputmode="numeric" value="${t.coupon||''}"></div><div class="field"><label>引落時割引（%）</label><input id="editDiscount" type="number" inputmode="decimal" min="0" max="100" step="0.1" value="${t.discount||0}"></div></div><div class="field"><label>分割回数</label><select id="editInstallments">${selectOptions([[1,'1回'],[2,'2回'],[3,'3回'],[6,'6回']],Number(t.installments||1))}</select></div>`;if(t.type==='transfer')h+=`<div class="grid2"><div class="field"><label>移動元</label><select id="editFrom">${selectOptions(Object.entries(balances).map(([k,v])=>[k,v.name]),t.from)}</select></div><div class="field"><label>移動先</label><select id="editTo">${selectOptions(Object.entries(balances).map(([k,v])=>[k,v.name]),t.to)}</select></div></div><div class="field"><label>手数料（任意）</label><input id="editTransferFee" type="text" inputmode="numeric" value="${t.fee||0}"></div><div class="field"><label>手数料の引落先</label><select id="editTransferFeeSide"><option value="from" ${(t.feeSide||'from')==='from'?'selected':''}>移動元</option><option value="to" ${(t.feeSide||'from')==='to'?'selected':''}>移動先</option></select></div>`;if(t.type==='charge')h+=`<div class="grid2"><div class="field"><label>チャージ先</label><select id="editTarget">${selectOptions(mkSettings.chargeTargets,t.target)}</select></div><div class="field"><label>チャージ元</label><select id="editSource">${selectOptions(pays,t.source)}</select></div></div>`;if(typeGroup(t)==='loan')h+=`<div class="field"><label>相手</label><input id="editPerson" value="${t.person||''}"></div>`;if(['expense','lend','borrowed'].includes(t.type))h+=`<div class="field"><label>特別費イベント</label><select id="editEvent"><option value="">なし</option>${eventsData.map(e=>`<option value="${e.name}" ${e.name===t.eventTag?'selected':''}>${e.name}</option>`).join('')}</select></div>`;if(!['transfer','charge'].includes(t.type))h+=`<div class="field"><label>店名・メモ</label><input id="editMemo" value="${(t.memo||'').replace(/"/g,'&quot;')}"></div>`;if(t.type!=='lend'){h=h.replace(/^(<div class="field"><label>日付<\/label>.*?<\/div>)(<div class="field"><label>金額<\/label>.*?<\/div>)/,'<div class="grid2">$1$2</div>')} $('editBody').innerHTML=h;compactEditLayout(t);mkSplitSetupEdit(t);if($('editPayment')&&$('editRakPaySourceField'))$('editPayment').addEventListener('change',()=>{$('editRakPaySourceField').style.display=$('editPayment').value==='rakutenpay'?'':'none'});$('editError').textContent='';$('editModal').classList.remove('hidden')}
+ let h=`<div class="field"><label>日付</label><input id="editDate" type="date" value="${t.date}"></div>`;if(t.type==='lend'){h+=`<div class="grid2"><div class="field"><label>会計総額</label><input id="editGross" type="text" value="${t.gross||0}"></div><div class="field"><label>自分の分</label><input id="editMine" type="text" value="${t.amount||0}"></div></div><div class="field"><label>相手の分</label><input id="editOther" type="text" value="${t.other||0}"></div>`}else h+=`<div class="field"><label>金額</label><input id="editAmount" type="text" value="${t.amount||0}"></div>`;if(['expense','lend','borrowed'].includes(t.type))h+=`<div class="field"><label>カテゴリ</label><select id="editCategory">${selectOptions(cats.map(c=>[c,c]),t.category||'')}</select></div>`;if(['expense','income','lend','repay','receive','loanBorrow','loanLend'].includes(t.type)){let ep=t.type==='income'?incomePays:pays;let el=t.type==='income'?'入金先':'支払・受取方法';h+=`<div class="field"><label>${el}</label><select id="editPayment">${selectOptions(ep,t.payment||'')}</select></div>`;}if(['expense','lend'].includes(t.type))h+=`<div class="field" id="editRakPaySourceField" style="${t.payment==='rakutenpay'?'':'display:none'}"><label>楽天Payの支払元</label><select id="editRakPaySource">${selectOptions(mkSettings.rakutenSources,t.rakutenPaySource||mkSettings.rakutenSources[0]?.[0]||'')}</select></div>`;if(['expense','repay','receive'].includes(t.type))h+=`<div class="field"><label>手数料（任意）</label><input id="editRecordFee" type="text" inputmode="numeric" value="${t.fee||0}"></div>`;if(['expense','lend'].includes(t.type))h+=`<div class="grid2"><div class="field"><label>ポイント使用</label><input id="editPoints" type="number" inputmode="numeric" min="0" step="1" value="${t.points||0}"></div><div class="field"><label for="editCoupon">クーポン使用</label><input id="editCoupon" type="text" inputmode="numeric" value="${t.coupon||''}"></div><div class="field"><label>引落時割引（%）</label><input id="editDiscount" type="number" inputmode="decimal" min="0" max="100" step="0.1" value="${t.discount||0}"></div></div><div class="field"><label>分割回数</label><select id="editInstallments">${selectOptions([[1,'1回'],[2,'2回'],[3,'3回'],[6,'6回']],Number(t.installments||1))}</select></div>`;if(t.type==='transfer')h+=`<div class="grid2"><div class="field"><label>移動元</label><select id="editFrom">${selectOptions(Object.entries(balances).map(([k,v])=>[k,v.name]),t.from)}</select></div><div class="field"><label>移動先</label><select id="editTo">${selectOptions(Object.entries(balances).map(([k,v])=>[k,v.name]),t.to)}</select></div></div><div class="field"><label>手数料（任意）</label><input id="editTransferFee" type="text" inputmode="numeric" value="${t.fee||0}"></div><div class="field"><label>手数料の引落先</label><select id="editTransferFeeSide"><option value="from" ${(t.feeSide||'from')==='from'?'selected':''}>移動元</option><option value="to" ${(t.feeSide||'from')==='to'?'selected':''}>移動先</option></select></div>`;if(t.type==='charge')h+=`<div class="grid2"><div class="field"><label>チャージ先</label><select id="editTarget">${selectOptions(mkSettings.chargeTargets,t.target)}</select></div><div class="field"><label>チャージ元</label><select id="editSource">${selectOptions(pays,t.source)}</select></div></div>`;if(typeGroup(t)==='loan')h+=`<div class="field"><label>相手</label><input id="editPerson" value="${t.person||''}"></div>`;if(['expense','lend','borrowed'].includes(t.type))h+=`<div class="field"><label>特別費イベント</label><select id="editEvent"><option value="">なし</option>${eventsData.map(e=>`<option value="${e.name}" ${e.name===t.eventTag?'selected':''}>${e.name}</option>`).join('')}</select></div>`;if(!['transfer','charge'].includes(t.type))h+=`<div class="field"><label>店名・メモ</label><input id="editMemo" value="${(t.memo||'').replace(/"/g,'&quot;')}"></div>`;if(t.type!=='lend'){h=h.replace(/^(<div class="field"><label>日付<\/label>.*?<\/div>)(<div class="field"><label>金額<\/label>.*?<\/div>)/,'<div class="grid2">$1$2</div>')} $('editBody').innerHTML=h;compactEditLayout(t);mkSplitSetupEdit(t);if(mkDeviceCorrectionCandidate(t)){const b=document.createElement('button');b.type='button';b.className='outline';b.textContent='今回の端末代を2回払いに訂正';b.onclick=mkCorrectDevicePurchase;$('editBody').append(b)}if($('editPayment')&&$('editRakPaySourceField'))$('editPayment').addEventListener('change',()=>{$('editRakPaySourceField').style.display=$('editPayment').value==='rakutenpay'?'':'none'});$('editError').textContent='';$('editModal').classList.remove('hidden')}
 function compactEditLayout(t){
  const root=$('editBody');if(!root)return;
  const original=[...root.querySelectorAll('.field')];
@@ -773,6 +773,7 @@ function mkValidateSettings(c){
  if(!obj(c)||c.version!==1||Object.keys(c).filter(k=>k!=='ui').sort().join('|')!==fields.sort().join('|'))fail();
  if(!list(c.accounts,1)||!c.accounts.every(x=>obj(x)&&key(x.id)&&label(x.name))||!unique(c.accounts.map(x=>x.id)))fail();
  for(const a of c.accounts){
+  if(a.prepDay!==undefined&&(!Number.isInteger(a.prepDay)||a.prepDay<1||a.prepDay>31))fail();
   if(a.kind!==undefined&&!['bank','prepaid'].includes(a.kind))fail();
   if(a.untrackedTxIds!==undefined&&(!Array.isArray(a.untrackedTxIds)||a.untrackedTxIds.length>100000||!unique(a.untrackedTxIds)||!a.untrackedTxIds.every(x=>typeof x==='string'&&x.length>0&&x.length<=200)))fail();
  }
@@ -981,6 +982,7 @@ function mkPreparation(today=mkToday()){
   const daily=new Map();for(const item of g.items)daily.set(item.due,(daily.get(item.due)||0)+item.amount);
   for(const [due,amount] of daily){g.total+=amount;if(!g.firstShortDate&&g.total>g.balance){g.firstShortDate=due;g.firstShortage=g.total-g.balance}}
   g.shortage=Math.max(0,g.total-g.balance);
+  const prepEnd=mkPrepEndFor(g.account,today);g.prepEnd=prepEnd;
   g.prepTotal=0;g.prepFirstShortDate='';
   for(const [due,amount] of daily){if(due>prepEnd)break;g.prepTotal+=amount;if(!g.prepFirstShortDate&&g.prepTotal>g.balance)g.prepFirstShortDate=due}
   g.prepShortage=g.prepFirstShortDate?Math.max(0,g.prepTotal-g.balance):0;
@@ -997,16 +999,16 @@ function mkTogglePreparation(button){
 }
 function mkRenderPreparation(){
  const p=mkPreparation(),esc=safeHtml;
- $('mkPrepPeriod').textContent=fmtMD(p.prepEnd)+'分まで';
- const note='<p class="small">準備する分：'+esc(p.today)+' ～ '+esc(p.prepEnd)+'（未処理の過去分も含む）</p><p class="small">登録済みのカード請求と、自動記録ONの口座引落予定で計算。未記録のカード定期払い・予定収入は含みません。</p>';
+ $('mkPrepPeriod').textContent='口座ごと';
+ const note='<p class="small">口座ごとの指定日までを準備します。未処理の過去分も含みます。</p><p class="small">登録済みのカード請求と、自動記録ONの口座引落予定で計算。未記録のカード定期払い・予定収入は含みません。</p>';
  $('prep').innerHTML=note+p.warnings.map(x=>'<p class="mk-prep-alert">'+esc(x)+'</p>').join('')+(p.groups.length?p.groups.map(g=>{
   const open=mkPrepExpanded.has(g.account),id='mk-prep-items-'+g.account;
   const rows=items=>items.map(x=>'<div class="small">'+esc(fmtMD(x.due)+' '+x.label)+' '+yen(x.amount)+'（'+(x.overdue?'未処理・':'')+statusText(x.status)+'）</div>').join('');
-  const near=g.items.filter(x=>x.due<=p.prepEnd),later=g.items.filter(x=>x.due>p.prepEnd);
-  const details='<div id="'+esc(id)+'" class="mk-prep-details"'+(open?'':' hidden')+'>'+rows(near)+(later.length?'<p class="small mk-prep-later-title">その先の予定（'+esc(fmtMD(p.end))+'まで）</p>'+rows(later):'')+'</div>';
-  const result=g.prepShortage?'<div class="mk-prep-alert"><div class="mk-prep-alert-line"><span>'+esc(fmtMD(g.prepFirstShortDate))+'の引落前までに</span> <strong>'+yen(g.prepShortage)+' 不足</strong></div><div class="small">'+esc(fmtMD(p.prepEnd))+'分までまとめた不足額'+(g.prepFirstShortDate<p.today?'・期限超過分を確認してください':'')+'</div></div>':'<p class="small mk-prep-ok">✓ '+esc(fmtMD(p.prepEnd))+'までの登録済み予定分は準備OK</p>';
-  const forecast=later.length?'<p class="small mk-prep-forecast">'+esc(fmtMD(p.end))+'までの不足見込み：'+yen(g.shortage)+'（変動あり）</p>':'';
-  return '<div class="item mk-prep-account"><button type="button" class="mk-prep-toggle" data-account="'+esc(g.account)+'" aria-expanded="'+open+'" aria-controls="'+esc(id)+'" onclick="mkTogglePreparation(this)"><span>'+esc(g.name)+'</span><span class="mk-prep-arrow" aria-hidden="true">'+(open?'▲':'▼')+'</span></button>'+details+'<div class="mk-prep-totals"><span class="small">対象の引落合計</span><strong>'+yen(g.prepTotal)+'</strong><span class="small">現在残高</span><strong>'+yen(g.balance)+'</strong></div>'+result+forecast+'</div>';
+  const near=g.items.filter(x=>x.due<=g.prepEnd),later=g.items.filter(x=>x.due>g.prepEnd);
+  const details='<div id="'+esc(id)+'" class="mk-prep-details"'+(open?'':' hidden')+'>'+rows(near)+(later.length?'<p class="small mk-prep-later-title">その先の予定（'+esc(fmtMD(p.end))+'まで）</p>'+rows(later)+(g.shortage?'<p class="small">'+esc(fmtMD(g.firstShortDate))+'から不足見込み・'+esc(fmtMD(p.end))+'まで合計 '+yen(g.shortage)+'（変動あり）</p>':''):'')+'</div>';
+  const result=g.prepShortage?'<div class="mk-prep-alert"><div class="mk-prep-alert-line"><span>'+esc(fmtMD(g.prepFirstShortDate))+'の引落前までに</span> <strong>'+yen(g.prepShortage)+' 不足</strong></div><div class="small">'+esc(fmtMD(g.prepEnd))+'分までまとめた不足額'+(g.prepFirstShortDate<p.today?'・期限超過分を確認してください':'')+'</div></div>':'';
+  const forecast=!g.prepShortage&&g.shortage?'<p class="small mk-prep-forecast">その先の予定に不足見込みあり</p>':'';
+  return '<div class="item mk-prep-account"><button type="button" class="mk-prep-toggle" data-account="'+esc(g.account)+'" aria-expanded="'+open+'" aria-controls="'+esc(id)+'" onclick="mkTogglePreparation(this)"><span>'+esc(g.name)+'</span><span class="mk-prep-arrow" aria-hidden="true">'+(open?'▲':'▼')+'</span></button><div class="mk-prep-period-row"><span class="small">'+esc(fmtMD(g.prepEnd))+'分まで</span><button type="button" class="ghost sm" data-account="'+esc(g.account)+'" onclick="mkEditPrepDay(this.dataset.account)">期間設定</button></div>'+details+'<div class="mk-prep-totals"><span class="small">対象の引落合計</span><strong>'+yen(g.prepTotal)+'</strong><span class="small">現在残高</span><strong>'+yen(g.balance)+'</strong></div>'+result+forecast+'</div>';
  }).join(''):'<p class="small">対象の引落予定はありません。</p>');
 }
 
@@ -2313,6 +2315,7 @@ function mkInitialMount(){
  const card=document.createElement('div');card.id='mkInitialEntry';card.className='card';const title=document.createElement('h3');title.textContent=mkOpening?'開始時点の設定':'使い始めの設定';const note=document.createElement('p');note.className='small';note.textContent=mkOpening?'開始時点の残高、未払いカード代、貸し借りを確認・追加・修正できます。':'設定だけを引き継いで、開始時点の残高から新しく始められます。';const b=document.createElement('button');b.type='button';b.className='outline';b.textContent=mkOpening?'開始時点の残高・未払いを開く':'初期設定を開く';b.onclick=mkInitialOpen;card.append(title,note,b);host.prepend(card);
 }
 function mkRequireStartDate(date,t=null,original=null){
+ if(mkDeviceCorrectionUnchanged(t,original))return;
  if(!mkOpening||date>=mkOpening.startDate)return;
  const card=t?.type==='expense'&&!t.paymentGroupId?finalCardForPayment(t.payment,t.rakutenPaySource):'';
  if(!card||acct(t.payment==='rakutenpay'?t.rakutenPaySource:t.payment))throw Error('開始日前は、開始日以降に引き落とされるカード払いの支出だけ記録できます。現金・電子マネー・やりとりなどは開始日以降の日付にしてください。');
@@ -2399,3 +2402,61 @@ async function mkRecurringRun(){
 }
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')mkRecurringRun()});
 setInterval(()=>{if(document.visibilityState==='visible')mkRecurringRun()},60000);
+
+// Preparation cutoff belongs to the account, not the bank name.
+function mkPrepEndFor(account,today){
+ const day=mkSettings.accounts.find(a=>a.id===account)?.prepDay||10;
+ const [y,m,d]=today.split('-').map(Number),current=mkDueDate(y,m,day);
+ if(today<=current)return current;
+ const [ny,nm]=addMonthsYM(y,m,1);return mkDueDate(ny,nm,day);
+}
+async function mkSaveLocalChange(build){
+ if(!mkStorageReady||mkRecurringBusy)throw Error('保存処理中です。少し待ってから操作してください。');
+ const locked=[...document.body.children].map(el=>[el,el.inert]);locked.forEach(([el])=>el.inert=true);
+ clearTimeout(mkSaveTimer);mkSaveTimer=null;mkStorageReady=false;
+ let committed=false;
+ try{
+  await MKStorage.flush();
+  const candidate=build(structuredClone(mkState()));mkValidateStoredSettings(candidate);
+  await MKStorage.save(candidate);committed=true;mkRestoreState(candidate);MKSecurity.saved(candidate);
+ }catch(e){if(committed)throw Error('保存しましたが画面更新に失敗しました。再読み込みしてください。');MKSecurity.failed(e);throw e}
+ finally{locked.forEach(([el,was])=>el.inert=was);}
+ mkStorageReady=true;renderAll();
+}
+async function mkEditPrepDay(account){
+ const a=mkSettings.accounts.find(a=>a.id===account);if(!a)return;
+ const value=prompt(a.name+'：毎月何日分までまとめて準備しますか？\n1〜31を入力。月末なら31。今日から次に迎える指定日までを計算します。\n例：27日・翌4日・翌10日をまとめるなら10。',a.prepDay||10);
+ if(value===null)return;const day=Number(value.trim());
+ if(!/^\d{1,2}$/.test(value.trim())||!Number.isInteger(day)||day<1||day>31){alert('1〜31の日を入力してください。');return}
+ try{await mkSaveLocalChange(s=>{const target=s.mkSettings.accounts.find(x=>x.id===account);if(!target)throw Error('口座が見つかりません。');target.prepDay=day;return s})}catch(e){alert(e.message)}
+}
+// One-off correction for the explicitly identified 2026-10-07 device purchase.
+// This does not enable pre-start installments in the ordinary record form.
+function mkDeviceCorrectionCandidate(t){
+ const card=t&&finalCardForPayment(t.payment,t.rakutenPaySource);
+ return !!(mkOpening?.startDate==='2026-11-01'&&t?.type==='expense'&&!t.paymentGroupId&&!t.recurringKey&&!t.deviceSplitCorrection&&t.date==='2026-10-07'&&Number(t.amount)===16390&&Number(t.paid??t.amount)===16390&&Number(t.billed??t.paid??t.amount)===16390&&Number(t.installments||1)===1&&['points','coupon','discount','fee'].every(k=>!Number(t[k]||0))&&card&&/dカード/i.test(cardDefs[card]?.name||'')&&!t.billOverride&&(!t.categorySplits||t.categorySplits.length===1));
+}
+function mkDeviceCorrectionBuild(s,id){
+ const t=s.txs.find(x=>x.id===id);
+ if(s.txs.some(x=>x.deviceSplitCorrection)||s.txs.filter(mkDeviceCorrectionCandidate).length!==1)throw Error('訂正済み、または対象を1件に特定できません。記録は変更していません。');
+ if(!mkDeviceCorrectionCandidate(t))throw Error('今回の訂正対象に一致しません。記録は変更していません。');
+ const card=finalCardForPayment(t.payment,t.rakutenPaySource),first='2026-11-10',second='2026-12-10';
+ if(dueForPurchase(card,t.date)!==first||nextMonthlyDue(card,first)!==second)throw Error('カードの引落日が想定と異なります。記録は変更していません。');
+ const idx=s.txs.findIndex(x=>x.id===id),item={kind:'tx',idx};
+ if([first,second].some(d=>Object.hasOwn(s.billItemAdjustments||{},billItemKey(item,d))))throw Error('この記録には請求額の個別修正があります。先に内容の確認が必要です。');
+ if(s.mkPaidBills?.[card+'|'+second]||Object.hasOwn(s.billAdjustments||{},card+'|'+second)||Object.hasOwn(cardDefs[card].known||{},second))throw Error('12/10分は確定額または引落済み情報があります。先に内容の確認が必要です。');
+ if((s.mkOpening?.cards||[]).some(x=>x.card===card&&x.due===second&&x.amount>0))throw Error('12/10の開始前未払い額が登録されています。二重計上を避けるため、先に内訳の確認が必要です。');
+ t.amount=32780;t.paid=32780;t.billed=32780;t.installments=2;
+ if(t.categorySplits)t.categorySplits[0].amount=32780;
+ t.deviceSplitCorrection={version:1,originalAmount:16390,at:new Date().toISOString()};
+ return s;
+}
+function mkDeviceCorrectionUnchanged(t,original){
+ return !!(original?.deviceSplitCorrection?.version===1&&original.date==='2026-10-07'&&original.type==='expense'&&original.amount===32780&&original.installments===2&&['id','type','date','payment','rakutenPaySource','billOverride','amount','paid','billed','installments'].every(k=>t[k]===original[k])&&['fee','points','coupon','discount'].every(k=>Number(t[k]||0)===Number(original[k]||0)));
+}
+async function mkCorrectDevicePurchase(){
+ const id=editingId,t=txs.find(x=>x.id===id);if(!mkDeviceCorrectionCandidate(t))return;
+ try{mkDeviceCorrectionBuild(structuredClone(mkState()),id)}catch(e){alert(e.message);return}
+ if(!confirm('今回の端末代を訂正します。\n10/7 '+(t.memo||t.category)+'\n購入総額：16,390円 → 32,780円（2回払い）\n11/10：16,390円のまま\n12/10：16,390円を追加\n\n11月の確定額・引落済み処理・現在残高は変更しません。\n12月の2回目を別の記録として追加していないことを確認してください。\n編集中の未保存内容は使用せず、保存済みの元記録を訂正します。'))return;
+ try{await mkSaveLocalChange(s=>mkDeviceCorrectionBuild(s,id));closeEditRecord();alert('端末代を32,780円・2回払いに訂正しました。12/10の請求内訳を確認してください。')}catch(e){alert(e.message)}
+}
