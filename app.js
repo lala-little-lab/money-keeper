@@ -940,9 +940,61 @@ function openBillDetail(card,selectedDue=''){
 }
 function mkShowBillReconcile(card,due){$('mk-reconcile-'+card+'-'+due)?.classList.toggle('hidden')}
 function closeBillDetail(){$('billModal').classList.add('hidden')}
-function cardRow(card){let [a,b]=visibleBills(card),c=mkCardRule(card,a),sa=statusForBill(card,a),sb=statusForBill(card,b);return `<div class="item"><div class="mk-card-heading"><div class="item-title">${safeHtml(c.name)}</div><button type="button" class="mk-bill-check" onclick="openBillDetail('${card}')">請求額を確認 ›</button></div><div class="item-meta">締め日：${c.monthEnd?'月末':c.closeDay+'日'} ／ 引落日：翌月${c.dueDay}日<br>引落口座：${safeHtml(c.account)}</div><div class="row"><span>次回引落</span><strong>${fmtMD(a)} ${yen(amountForBill(card,a))}（${statusText(sa)}）</strong></div><div class="row"><span class="small">その次</span><span class="small">${fmtMD(b)} ${yen(amountForBill(card,b))}（${statusText(sb)}）</span></div></div>`}
+function cardRow(card){let [a,b]=visibleBills(card),c=mkCardRule(card,a),sa=statusForBill(card,a),sb=statusForBill(card,b);return `<div class="item"><div class="mk-card-heading"><div class="item-title">${safeHtml(c.name)}</div><button type="button" class="mk-bill-check" onclick="openBillDetail('${card}')">請求額を確認 ›</button></div><div class="item-meta">締め日：${c.monthEnd?'月末':c.closeDay+'日'} ／ 確定日：${cardDefs[card].confirmDay?cardDefs[card].confirmDay+'日':'未設定'}<br>引落日：翌月${c.dueDay}日 ／ 引落口座：${safeHtml(c.account)}</div><div class="row"><span>次回引落</span><strong>${fmtMD(a)} ${yen(amountForBill(card,a))}（${statusText(sa)}）</strong></div><div class="row"><span class="small">その次</span><span class="small">${fmtMD(b)} ${yen(amountForBill(card,b))}（${statusText(sb)}）</span></div></div>`}
+// Pure projection: never creates records, changes balances, or advances recurring cursors.
+function mkPreparation(today=mkToday()){
+ const [y,m,d]=today.split('-').map(Number),[ey,em]=addMonthsYM(y,m,2),end=mkDueDate(ey,em,d),groups=new Map(),warnings=[];
+ function add(account,item){
+  if(!balances[account]||item.amount<=0||item.due>end)return;
+  if(!groups.has(account))groups.set(account,{account,name:balances[account].name,balance:balances[account].v,items:[]});
+  groups.get(account).items.push(item);
+ }
+ for(const card of Object.keys(cardDefs)){
+  const dates=new Set([...allocRecorded(card).map(x=>x.due),...(mkOpening?.cards||[]).filter(x=>x.card===card).map(x=>x.due),...Object.keys(cardDefs[card].known||{}),...Object.keys(billAdjustments).filter(k=>k.startsWith(card+'|')).map(k=>k.slice(card.length+1))]);
+  for(const due of dates){
+   if(!mkValidRecordDate(due)||due>end||mkIsPaid(card,due))continue;
+   const rule=mkCardRule(card,due);
+   add(rule.accountId,{due,amount:amountForBill(card,due),label:cardDefs[card].name,card,status:statusForBill(card,due),overdue:due<today});
+  }
+ }
+ for(const r of recurring){
+  if(!r.autoRecord||r.paused||finalCardForPayment(r.finalSource,''))continue;
+  const account=mkSettings.balanceRoutes[r.finalSource];
+  // Cash and prepaid balances are not withdrawal bank accounts.
+  if(!mkSettings.accounts.some(a=>a.id===account&&(a.kind==='bank'||(!a.kind&&a.id!=='cash'&&!mkSettings.chargeTargets.some(x=>x[0]===a.id)))))continue;
+  try{
+   for(let n=r.generatedCount||0,guard=0;guard<=1200;n++,guard++){
+    const due=mkRecurringDate(r,n);
+    if(due>end||(r.limited&&((r.count>0&&n>=r.count)||(r.endDate&&due>r.endDate))))break;
+    if(guard===1200)throw Error('予定件数が多すぎます');
+    const id='rec:'+r.autoId+':'+due;
+    if(txs.some(t=>t.id===id||t.recurringKey===id))continue;
+    add(account,{due,amount:r.amount,label:r.name,status:'planned',overdue:due<today});
+   }
+  }catch(e){warnings.push('「'+r.name+'」の予定を計算できません。定期支払いの設定を確認してください。')}
+ }
+ for(const g of groups.values()){
+  g.items.sort((a,b)=>a.due.localeCompare(b.due)||a.label.localeCompare(b.label));
+  g.total=0;g.firstShortDate='';g.firstShortage=0;
+  // Combine same-day withdrawals before deciding the first shortage.
+  const daily=new Map();for(const item of g.items)daily.set(item.due,(daily.get(item.due)||0)+item.amount);
+  for(const [due,amount] of daily){g.total+=amount;if(!g.firstShortDate&&g.total>g.balance){g.firstShortDate=due;g.firstShortage=g.total-g.balance}}
+  g.shortage=Math.max(0,g.total-g.balance);
+ }
+ return {today,end,groups:[...groups.values()],warnings};
+}
+function mkRenderPreparation(){
+ const p=mkPreparation(),esc=safeHtml;
+ const note='<p class="small">対象：'+esc(p.today)+' ～ '+esc(p.end)+'（未処理の過去分も含む）</p><p class="small">登録済みのカード請求と、自動記録ONの口座引落予定で計算します。今後の買い物・未記録のカード定期払い・予定収入は含みません。</p>';
+ $('prep').innerHTML=note+p.warnings.map(x=>'<p class="warnbox">'+esc(x)+'</p>').join('')+(p.groups.length?p.groups.map(g=>{
+  const details=g.items.map(x=>'<div class="small">'+esc(fmtMD(x.due)+' '+x.label)+' '+yen(x.amount)+'（'+(x.overdue?'未処理・':'')+statusText(x.status)+'）</div>').join('');
+  const result=g.shortage?'<div class="warnbox"><div class="small">'+(g.firstShortDate<p.today?'期限を過ぎた未処理分を確認してください':esc(fmtMD(g.firstShortDate))+'の引落前までに')+'</div><strong>'+yen(g.firstShortage)+' 不足</strong>'+(g.shortage>g.firstShortage?'<div class="small">対象期間分をまとめて準備するなら '+yen(g.shortage)+'</div>':'')+'</div>':'<p class="small">✓ 登録済み予定分は準備OK</p>';
+  return '<div class="item"><div class="item-title">'+esc(g.name)+'</div>'+details+'<div class="row"><span class="small">対象の引落合計</span><strong>'+yen(g.total)+'</strong></div><div class="row"><span class="small">現在残高</span><strong>'+yen(g.balance)+'</strong></div>'+result+'</div>';
+ }).join(''):'<p class="small">対象の引落予定はありません。</p>');
+}
+
 function renderDue(){
- $('prep').innerHTML='<div class="small">給与サイクルに合わせた準備額の自動計算は未対応です。下のカード請求で引落日・金額・口座を確認してください。</div>';
+ mkRenderPreparation();
  $('cards').innerHTML=mkSettings.cards.map(c=>c.id).map(cardRow).join('');
 }
 function recurringMeta(r){const label=mkSettings.pays.find(x=>x[0]===r.finalSource)?.[1]||r.finalSource||'';let info=recCycleText(r)+'　'+(r.route||'')+(label?' → '+label:'');let next='';if(r.autoRecord){try{const date=mkRecurringDate(r,r.generatedCount||0);next=(r.limited&&((r.count>0&&r.generatedCount>=r.count)||(r.endDate&&date>r.endDate)))?'予定回数・期間が終了しています':'次回記録：'+date;next+=' ／ 記録済み '+(r.generatedCount||0)+'回'}catch(e){next='日付設定を確認してください'}}return safeHtml(info)+'<br>'+safeHtml(next)+(next?'<br>':'')+'<span class="cat-mini">'+safeHtml(r.category||'支出集計対象外')+'</span>'}
@@ -1396,18 +1448,10 @@ function mkTodoItems(){
    }
  }
  
- const grouped={};
- for(const card of Object.keys(cardDefs)){
-  const due=visibleBills(card)[0],amount=amountForBill(card,due),status=statusForBill(card,due);
-  if(amount<=0||due<today||status==='planned')continue;
-  const account=mkCardRule(card,due).accountId;if(!account)continue;
-  const k=account+'|'+due;
-  if(!grouped[k])grouped[k]={account,due,amount:0,cards:[]};
-  grouped[k].amount+=amount;grouped[k].cards.push(card);
- }
- for(const g of Object.values(grouped)){
-  const shortage=Math.max(0,g.amount-balances[g.account].v),key='fund|'+g.account+'|'+g.due;
-  if(shortage>0&&!mkTodoHidden[key])list.push({key,title:balances[g.account].name+'へ '+yen(shortage)+' 入金',due:g.due,kind:'fund',auto:true,shortage,card:g.cards[0],estimated:g.cards.some(c=>statusForBill(c,g.due)!=='confirmed')});
+ for(const g of mkPreparation().groups){
+  if(!g.shortage)continue;
+  const key='fund|'+g.account+'|'+g.firstShortDate;
+  if(!mkTodoHidden[key])list.push({key,title:g.name+'へ '+yen(g.shortage)+' 入金',due:g.firstShortDate,kind:'fund',auto:true,shortage:g.shortage,card:g.items.find(x=>x.card)?.card||'',estimated:g.items.some(x=>x.status!=='confirmed')});
  }
  for(const t of mkTodos){
   if(t.done||t.hidden)continue;
@@ -1691,7 +1735,7 @@ function mkSettingsRenderEdit(body){
  const label=document.createElement('label');label.textContent=isAccount?'口座・残高の名前':'支払方法の名前';const input=document.createElement('input');input.type='text';input.id='mkSettingsName';input.maxLength=60;input.value=value.name;input.oninput=remember;label.append(input);body.append(label);
  function check(text,checked,id){const label=document.createElement('label');label.className='mk-settings-check';const cb=document.createElement('input');cb.type='checkbox';cb.checked=checked;cb.id=id;cb.onchange=remember;label.append(cb,document.createTextNode(text));body.append(label);return cb}
  let home=null;if(isAccount){home=check('ホームの残高に表示する',value.home,'mkSettingsBalanceVisible');body.append(mkSettingsText('非表示でも合計・引落に含まれます。','small mk-settings-note'))}
- const pay=check('新しい記録の候補に表示する',value.pay,'mkSettingsPayVisible');body.append(mkSettingsText('非表示でも過去の記録・請求は残ります。','small mk-settings-note'));
+ const pay=check('支払方法の選択肢に表示する',value.pay,'mkSettingsPayVisible');body.append(mkSettingsText('チェックを外しても、過去の記録・請求は残ります。','small mk-settings-note'));
  body.append(mkSettingsButton('編集を戻す',()=>{delete mkSettingsBuffers[slot];history.back()}),mkSettingsButton('設定に反映',()=>{remember();if(mkSettingsCommitBuffer(slot))history.back()},'outline'));
 }
 function mkSettingsGrip(row,key,move){
@@ -1729,9 +1773,17 @@ function mkSettingsRenderLayouts(body){
   const list=document.createElement('div');body.append(list);
   for(const k of flat){const row=document.createElement('div');row.className='mk-settings-row mk-settings-layout-item';row.dataset.key=k;const name=document.createElement('span');name.textContent=mkSettingsName(k)+(c.ui.hiddenPays.includes(k)?'（非表示）':'');row.append(name);
    if(['payment','more'].includes(zone)&&k!=='__more')row.append(mkSettingsButton(zone==='payment'?'もっと見るへ':'いつも表示へ',()=>{const dest=zone==='payment'?'more':'payment',src=flat.filter(x=>x!==k),next=[...c.layouts[dest].flat(),k];mkSettingsPack(zone,src);mkSettingsPack(dest,next);mkSettingsSyncPayOrder();mkSettingsRender()}));
+   if(zone==='charge')row.append(mkSettingsButton('一覧から外す',()=>mkRemoveChargeSource(k)));
    mkSettingsGrip(row,k,(a,b)=>{const arr=flat.slice(),ai=arr.indexOf(a),bi=arr.indexOf(b);arr.splice(bi,0,arr.splice(ai,1)[0]);mkSettingsPack(zone,arr);if(zone==='income')c.ui.customIncome=true;mkSettingsSyncPayOrder();mkSettingsRender()});list.append(row);
   }
  }
+}
+function mkRemoveChargeSource(k){
+ const c=mkSettingsDraft;if(!c)return false;
+ const used=Object.entries({...c.chargeDefaults,...chargeDefaults}).filter(([target,source])=>source===k).map(([target])=>c.labels[target]||target);
+ if(used.length){$('mkSettingsError').textContent=used.join('・')+'の「いつものチャージ元」です。記録画面の「設定変更」で別のチャージ元に変更してから外してください。';return false}
+ c.chargeDefaults={...c.chargeDefaults,...chargeDefaults};
+ mkSettingsPack('charge',c.layouts.charge.flat().filter(x=>x!==k));$('mkSettingsError').textContent='';mkSettingsRender();return true;
 }
 function mkSettingsPack(zone,flat,caps=mkSettingsDraft.layouts[zone].map(x=>x.length)){
  const rows=[];let offset=0;for(const n of caps){if(offset>=flat.length)break;rows.push(flat.slice(offset,offset+n));offset+=n}while(offset<flat.length){rows.push(flat.slice(offset,offset+4));offset+=4}mkSettingsDraft.layouts[zone]=rows;
@@ -1751,7 +1803,7 @@ async function mkSettingsSave(){
   const oldRakuten=rakutenPaySource;
   mkApplySettings(candidate.mkSettings);chargeDefaults=candidate.chargeDefaults;for(const [k,v] of Object.entries(candidate.balances))balances[k].v=v;rakutenPaySource=oldRakuten;
   // A hidden choice cannot stay invisibly selected for the next new record.
-  if(mkHiddenPay(payment))payment='';if(mkHiddenPay(chargeTarget))chargeTarget='';if(mkHiddenPay(chargeSource))chargeSource='';
+  if(mkHiddenPay(payment))payment='';if(mkHiddenPay(chargeTarget))chargeTarget='';if(mkHiddenPay(chargeSource)||!mkSettings.layouts.charge.flat().includes(chargeSource))chargeSource='';
   if(mkHiddenPay(from)){from='';$('fromBtn').firstElementChild.textContent='選んでください'}if(mkHiddenPay(to)){to='';$('toBtn').firstElementChild.textContent='選んでください'}
   if(from)$('fromBtn').firstElementChild.textContent=balances[from]?.name||from;if(to)$('toBtn').firstElementChild.textContent=balances[to]?.name||to;
   if(mkHiddenPay(rakutenPaySource))rakutenPaySource=mkSettings.rakutenSources.find(([k])=>!mkHiddenPay(k))?.[0]||'';
