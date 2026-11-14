@@ -981,7 +981,7 @@ button.history-item-meta.mk-history-toggle.expanded{display:block;-webkit-line-c
 .mk-prep-details{margin:0 0 10px;overflow-wrap:anywhere}
 .mk-prep-later-title{margin:10px 0 3px;font-weight:700}
 .mk-prep-totals{display:grid;grid-template-columns:8em minmax(0,1fr);gap:4px 10px;align-items:center;width:196px;max-width:100%;margin:2px 0 0 auto;font-size:12px}
-.mk-prep-totals>.small{text-align:left}
+.mk-prep-totals>.small{text-align:left;transform:translateX(2em)}
 .mk-prep-totals>strong{text-align:right;font-size:16px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .mk-prep-alert{margin-top:10px;padding:10px 12px;border:1px solid #ecd4df;border-radius:12px;background:#fbeef3;color:var(--muted);font-size:12px;line-height:1.5}
 .mk-prep-alert-line strong{color:#a44870;font-weight:800;white-space:nowrap}
