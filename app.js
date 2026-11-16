@@ -1383,7 +1383,7 @@ function mkCandidateCurrentCategory(){return mode==='expense'||(mode==='loan'&&[
 function mkCandidateCategories(){return mkSplitEnabled()&&mkSplitDraft.length?mkSplitDraft.map(r=>r.category).filter(Boolean):[mkCandidateCurrentCategory()].filter(Boolean)}
 function mkCandidateTabs(){const cs=mkCandidateCategories(),related=mkMemoData.words.some(w=>cs.some(c=>w.cats.includes(c)));return [...(related?[{id:'__related',name:'関連'}]:[]),...mkMemoData.groups,{id:'__events',name:'特別費'}]}
 function mkCandidateWords(){if(mkCandidateTab==='__events')return eventsData.filter(e=>!e.archived).map(e=>({id:e.id,text:e.name,event:true}));if(mkCandidateTab==='__related'){const cs=mkCandidateCategories();return mkMemoData.groups.flatMap(g=>mkMemoData.words.filter(w=>w.group===g.id&&cs.some(c=>w.cats.includes(c))))}return mkMemoData.words.filter(w=>w.group===mkCandidateTab)}
-function mkCandidateToggle(){mkCandidateOpen=!mkCandidateOpen;if(mkCandidateOpen){$('memo').blur();mkCandidateTab='';mkCandidateSync()}mkCandidateRender()}
+function mkCandidateToggle(){if(!mkCandidateOpen){mkMemoPick();return}mkCandidateOpen=false;mkCandidateRender()}
 function mkCandidateRender(){
  const toggle=$('mkCandidateToggle');if(!toggle)return;$('mkCandidateManage').hidden=!mkCandidateOpen;
  toggle.textContent=mkCandidateOpen?'候補を閉じる −':'候補から選ぶ ＋';toggle.setAttribute('aria-expanded',String(mkCandidateOpen));$('mkCandidatePanel').hidden=!mkCandidateOpen;
@@ -1432,7 +1432,7 @@ function mkCandidateToggleWord(id){
  }
  mkCandidatePaint();mkRenderEventSuggestion();mkMemoClearPaint();if(!part)mkMemoShowEnd();
 }
-function mkCandidateReset(){mkMemoUndo=null;mkMemoClearPaint();mkCandidateParts.clear();mkCandidatePrevious=$('memo').value;mkCandidateBefore=null;mkCandidateOpen=false;mkCandidateTab='';mkCandidateCategory='';mkCandidateGesture=null;mkCandidateIgnoreClick=0;mkCandidateRender()}
+function mkCandidateReset(){$('memo').readOnly=true;mkMemoUndo=null;mkMemoClearPaint();mkCandidateParts.clear();mkCandidatePrevious=$('memo').value;mkCandidateBefore=null;mkCandidateOpen=false;mkCandidateTab='';mkCandidateCategory='';mkCandidateGesture=null;mkCandidateIgnoreClick=0;mkCandidateRender()}
 $('memo').addEventListener('beforeinput',()=>{mkCandidateBefore={value:$('memo').value,start:$('memo').selectionStart,end:$('memo').selectionEnd}});
 $('memo').addEventListener('input',()=>{mkMemoUndo=null;mkCandidateSync();mkCandidatePaint();mkMemoClearPaint()});
 const mkCandidateArea=$('mkCandidateWords');
@@ -2123,7 +2123,7 @@ function mkGroupLoanPaint(){
  const groups=mkGroupList();$('loanSummary').innerHTML='';
  if(!groups.length){$('loanSummary').textContent='まだグループの記録はありません。';return}
  for(const g of groups){const card=document.createElement('div');card.className='card mk-payment-group-card';const head=document.createElement('button');head.type='button';head.className='mk-group-card-head';head.setAttribute('aria-expanded',String(mkGroupExpanded===g.id));head.innerHTML='<span><strong class="mk-payment-group-name">'+safeHtml(g.name)+'</strong><span class="mk-payment-group-balance">'+safeHtml(mkGroupBalanceText(g.net))+'</span></span><span class="loan-card-arrow">'+(mkGroupExpanded===g.id?'▲':'▼')+'</span>';head.onclick=()=>{mkGroupExpanded=mkGroupExpanded===g.id?'':g.id;renderLoans()};const header=document.createElement('div');header.className='mk-group-header';header.append(head);
- if(mkGroupExpanded===g.id){const setting=document.createElement('button');setting.type='button';setting.className='mk-member-add mk-group-member-setting';setting.textContent='メンバー設定';setting.onclick=()=>mkMemberOpen(false,g.id);header.append(setting)}const balance=head.querySelector('.mk-payment-group-balance');header.append(balance);card.append(header);
+ if(mkGroupExpanded===g.id){const setting=document.createElement('button');setting.type='button';setting.className='mk-member-add mk-group-member-setting';setting.textContent='メンバー設定';setting.onclick=()=>mkMemberOpen(false,g.id);header.append(setting);const rename=document.createElement('button');rename.type='button';rename.className='mk-member-add';rename.textContent='名前を変更';rename.onclick=()=>mkRenamePaymentGroup(g.id);header.append(rename)}const balance=head.querySelector('.mk-payment-group-balance');header.append(balance);card.append(header);
  if(mkGroupExpanded===g.id){const actions=document.createElement('div');actions.className='choice-row mk-payment-group-actions';for(const [kind,title] of [['bill','会計を記録'],['receive','受け取った'],['pay','支払った']]){const b=document.createElement('button');b.type='button';b.className='mk-loan-todo-btn';b.textContent=title;b.onclick=()=>{nav('record',null);setMode('group',$('mkGroupModeBtn'));mkGroupChooseKind(kind);$('mkGroupName').value=g.name;mkMemberCandidates()};actions.append(b)}card.append(actions);
  const heading=document.createElement('div');heading.className='loan-history-head';heading.innerHTML='<span class="loan-history-title">グループの履歴</span>';card.append(heading);
  for(const t of g.rows){const row=document.createElement('div');row.className='loan-record';
@@ -2460,3 +2460,43 @@ async function mkCorrectDevicePurchase(){
  if(!confirm('今回の端末代を訂正します。\n10/7 '+(t.memo||t.category)+'\n購入総額：16,390円 → 32,780円（2回払い）\n11/10：16,390円のまま\n12/10：16,390円を追加\n\n11月の確定額・引落済み処理・現在残高は変更しません。\n12月の2回目を別の記録として追加していないことを確認してください。\n編集中の未保存内容は使用せず、保存済みの元記録を訂正します。'))return;
  try{await mkSaveLocalChange(s=>mkDeviceCorrectionBuild(s,id));closeEditRecord();alert('端末代を32,780円・2回払いに訂正しました。12/10の請求内訳を確認してください。')}catch(e){alert(e.message)}
 }
+
+
+// Rename by stable group ID; preserve every financial field and membership.
+function mkRenamePaymentGroupBuild(state,id,value){
+ const name=value.trim();if(!name||name.length>60||/[<>\u0000-\u001f]/.test(name))throw Error('グループ名は1〜60文字で入力してください。<>や改行は使えません。');
+ const names=new Map();for(const t of [...state.txs].reverse())if(t.paymentGroupId)names.set(t.paymentGroupId,t.groupName);
+ for(const g of state.mkPaymentGroups||[])names.set(g.id,g.name);
+ if(!names.has(id))throw Error('グループが見つかりません。');
+ if([...names].some(([key,n])=>key!==id&&n===name))throw Error('同じ名前のグループがあります。別の名前にしてください。');
+ state.mkPaymentGroups=state.mkPaymentGroups||[];
+ const group=state.mkPaymentGroups.find(g=>g.id===id);
+ if(group)group.name=name;else state.mkPaymentGroups.push({id,name,members:[]});
+ for(const t of state.txs)if(t.paymentGroupId===id)t.groupName=name;
+ mkMemberValidate(state.mkPaymentGroups);return state;
+}
+async function mkRenamePaymentGroup(id){
+ const group=mkGroupList().find(g=>g.id===id);if(!group)return;
+ const value=prompt('グループ名を変更\nこのグループの過去の記録も同じ名前に変更します。',group.name);
+ if(value===null||value.trim()===group.name)return;
+ try{
+  mkRenamePaymentGroupBuild(structuredClone(mkState()),id,value);
+  await mkSaveLocalChange(s=>mkRenamePaymentGroupBuild(s,id,value));
+  if($('mkGroupName').value.trim()===group.name)$('mkGroupName').value=value.trim();
+  if(txs.find(t=>t.id===editingId)?.paymentGroupId===id&&$('editName'))$('editName').value=value.trim();
+  mkMemberCandidates();mkMemberCandidates(true);
+  $('mkGroupNames').replaceChildren(...mkGroupList().map(g=>{const option=document.createElement('option');option.value=g.name;return option}));
+ }catch(e){alert(e.message)}
+}
+// The new-record memo starts as a picker; text entry is an explicit mode.
+function mkMemoPick(){
+ const memo=$('memo'),wasTyping=!memo.readOnly;memo.readOnly=true;if(wasTyping)memo.blur();mkCandidateSync();
+ if(!mkCandidateOpen)mkCandidateTab='';mkCandidateOpen=true;mkCandidateRender();
+}
+function mkMemoType(){
+ const memo=$('memo');mkCandidateOpen=false;mkCandidateRender();memo.readOnly=false;
+ memo.focus({preventScroll:true});memo.setSelectionRange(memo.value.length,memo.value.length);
+}
+$('memo').addEventListener('focus',()=>{if($('memo').readOnly)mkMemoPick()});
+$('memo').addEventListener('click',()=>{if($('memo').readOnly)mkMemoPick()});
+$('memo').addEventListener('blur',()=>{$('memo').readOnly=true});

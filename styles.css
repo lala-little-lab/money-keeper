@@ -989,3 +989,6 @@ button.history-item-meta.mk-history-toggle.expanded{display:block;-webkit-line-c
 .mk-prep-ok,.mk-prep-forecast{margin:10px 0 0}
 
 .mk-prep-period-row{display:flex;align-items:center;gap:8px;margin:0 0 8px}.mk-prep-period-row button{padding:4px 8px;font-size:11px}
+
+/* Keep memo controls usable on narrow screens. */
+.mk-candidate-controls{flex-wrap:wrap}
