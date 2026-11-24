@@ -1383,7 +1383,7 @@ function mkCandidateCurrentCategory(){return mode==='expense'||(mode==='loan'&&[
 function mkCandidateCategories(){return mkSplitEnabled()&&mkSplitDraft.length?mkSplitDraft.map(r=>r.category).filter(Boolean):[mkCandidateCurrentCategory()].filter(Boolean)}
 function mkCandidateTabs(){const cs=mkCandidateCategories(),related=mkMemoData.words.some(w=>cs.some(c=>w.cats.includes(c)));return [...(related?[{id:'__related',name:'関連'}]:[]),...mkMemoData.groups,{id:'__events',name:'特別費'}]}
 function mkCandidateWords(){if(mkCandidateTab==='__events')return eventsData.filter(e=>!e.archived).map(e=>({id:e.id,text:e.name,event:true}));if(mkCandidateTab==='__related'){const cs=mkCandidateCategories();return mkMemoData.groups.flatMap(g=>mkMemoData.words.filter(w=>w.group===g.id&&cs.some(c=>w.cats.includes(c))))}return mkMemoData.words.filter(w=>w.group===mkCandidateTab)}
-function mkCandidateToggle(){if(!mkCandidateOpen){mkMemoPick();return}mkCandidateOpen=false;mkCandidateRender()}
+function mkCandidateToggle(){mkCandidateSync();mkCandidateOpen=!mkCandidateOpen;mkCandidateRender()}
 function mkCandidateRender(){
  const toggle=$('mkCandidateToggle');if(!toggle)return;$('mkCandidateManage').hidden=!mkCandidateOpen;
  toggle.textContent=mkCandidateOpen?'候補を閉じる −':'候補から選ぶ ＋';toggle.setAttribute('aria-expanded',String(mkCandidateOpen));$('mkCandidatePanel').hidden=!mkCandidateOpen;
@@ -1432,7 +1432,7 @@ function mkCandidateToggleWord(id){
  }
  mkCandidatePaint();mkRenderEventSuggestion();mkMemoClearPaint();if(!part)mkMemoShowEnd();
 }
-function mkCandidateReset(){$('memo').readOnly=true;mkMemoUndo=null;mkMemoClearPaint();mkCandidateParts.clear();mkCandidatePrevious=$('memo').value;mkCandidateBefore=null;mkCandidateOpen=false;mkCandidateTab='';mkCandidateCategory='';mkCandidateGesture=null;mkCandidateIgnoreClick=0;mkCandidateRender()}
+function mkCandidateReset(){mkMemoUndo=null;mkMemoClearPaint();mkCandidateParts.clear();mkCandidatePrevious=$('memo').value;mkCandidateBefore=null;mkCandidateOpen=false;mkCandidateTab='';mkCandidateCategory='';mkCandidateGesture=null;mkCandidateIgnoreClick=0;mkCandidateRender()}
 $('memo').addEventListener('beforeinput',()=>{mkCandidateBefore={value:$('memo').value,start:$('memo').selectionStart,end:$('memo').selectionEnd}});
 $('memo').addEventListener('input',()=>{mkMemoUndo=null;mkCandidateSync();mkCandidatePaint();mkMemoClearPaint()});
 const mkCandidateArea=$('mkCandidateWords');
@@ -2488,15 +2488,3 @@ async function mkRenamePaymentGroup(id){
   $('mkGroupNames').replaceChildren(...mkGroupList().map(g=>{const option=document.createElement('option');option.value=g.name;return option}));
  }catch(e){alert(e.message)}
 }
-// The new-record memo starts as a picker; text entry is an explicit mode.
-function mkMemoPick(){
- const memo=$('memo'),wasTyping=!memo.readOnly;memo.readOnly=true;if(wasTyping)memo.blur();mkCandidateSync();
- if(!mkCandidateOpen)mkCandidateTab='';mkCandidateOpen=true;mkCandidateRender();
-}
-function mkMemoType(){
- const memo=$('memo');mkCandidateOpen=false;mkCandidateRender();memo.readOnly=false;
- memo.focus({preventScroll:true});memo.setSelectionRange(memo.value.length,memo.value.length);
-}
-$('memo').addEventListener('focus',()=>{if($('memo').readOnly)mkMemoPick()});
-$('memo').addEventListener('click',()=>{if($('memo').readOnly)mkMemoPick()});
-$('memo').addEventListener('blur',()=>{$('memo').readOnly=true});
