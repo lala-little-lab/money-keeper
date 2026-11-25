@@ -992,3 +992,12 @@ button.history-item-meta.mk-history-toggle.expanded{display:block;-webkit-line-c
 
 /* Keep memo controls usable on narrow screens. */
 .mk-candidate-controls{flex-wrap:wrap}
+
+.mk-event-category-link{background:transparent;color:var(--ink);font:inherit;font-weight:800;padding:8px 0 8px 8px;min-height:44px}.mk-event-category-link span{color:var(--accent);font-size:.85em}.mk-event-category-link:focus-visible{outline:2px solid var(--accent);border-radius:6px}
+#mkEventCategoryDialog{width:min(520px,calc(100% - 24px));max-height:85dvh;overflow:auto;overscroll-behavior:contain;border:1px solid var(--line);border-radius:20px;padding:18px;background:var(--card);color:var(--ink)}#mkEventCategoryDialog::backdrop{background:rgba(0,0,0,.35)}#mkEventCategoryDialog h3{margin:0;font-size:18px;overflow-wrap:anywhere}#mkEventCategoryDialog .ghost{flex-shrink:0}#mkEventCategoryDialog .small,#mkEventCategoryDialog .history-item-note{overflow-wrap:anywhere}#mkEventCategoryDialog .history-item-main{gap:12px}
+
+/* Compact own share / payment labels; allow heading to wrap, never squeeze amounts. */
+.mk-group-amount-pair{font-size:13px;font-weight:700;white-space:nowrap}
+.history-item-main:has(.mk-group-amount-pair),.mk-recent-heading:has(.mk-group-amount-pair),.loan-record-top:has(.mk-group-amount-pair){flex-wrap:wrap;row-gap:3px}
+.history-item-main:has(.mk-group-amount-pair)>.history-item-amt,.mk-recent-heading:has(.mk-group-amount-pair)>strong,.loan-record-top>.mk-group-amount-pair{margin-left:auto}
+.mk-group-totals{margin:4px 0 12px;line-height:1.6}
